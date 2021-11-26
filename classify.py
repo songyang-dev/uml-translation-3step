@@ -92,7 +92,8 @@ pickle.dump(vec, open("model.vec", "wb"))
 # print(test(vec, trained_model))
 
 # Performances:
-#   Model                   Tf-idf  Count
+#                           Vectorizers     Word Embeddings
+#   Model                   Tf-idf  Count   
 #   -------------------------------------
 #   Bernoulli Bayes         87      83
 #   Multinomial Bayes       83      85
