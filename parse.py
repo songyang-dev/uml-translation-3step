@@ -24,8 +24,8 @@ doc = nlp(text)
 
 # Extract features for one class
 
-# copula: This ... is ...
-class_pattern = [
+# copula: The ... is ...
+copula_pattern = [
     # anchor token: verb "to be"
     {
         "RIGHT_ID": "copula",
@@ -36,19 +36,19 @@ class_pattern = [
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"}
+        "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj", "expl"]}}
     },
     # object of the verb
     {
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "dobj"}
+        "RIGHT_ATTRS": {"DEP": "attr"}
     }
 ]
 
 matcher = DependencyMatcher(nlp.vocab)
-matcher.add("CLASS", [class_pattern])
+matcher.add("CLASS", [copula_pattern])
 matches = matcher(doc)
 
 #print(matches)
@@ -60,4 +60,6 @@ for m in matches:
     # Each token_id corresponds to one pattern dict
     match_id, token_ids = m
     for i in range(len(token_ids)):
-        print(class_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
+        matched_token = doc[token_ids[i]].text
+        matched_rule = copula_pattern[i]["RIGHT_ID"]
+        print(matched_rule + ":", matched_token)
