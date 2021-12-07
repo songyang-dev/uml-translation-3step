@@ -51,4 +51,13 @@ matcher = DependencyMatcher(nlp.vocab)
 matcher.add("CLASS", [class_pattern])
 matches = matcher(doc)
 
-print(matches)
+#print(matches)
+
+print("# of matches: {matches}".format(matches=len(matches)))
+
+for m in matches:
+    print("")
+    # Each token_id corresponds to one pattern dict
+    match_id, token_ids = m
+    for i in range(len(token_ids)):
+        print(class_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
