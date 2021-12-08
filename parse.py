@@ -55,6 +55,9 @@ matches = matcher(doc)
 
 print("# of matches: {matches}".format(matches=len(matches)))
 
+def process_matched(matched_token, matched_rule):
+    print(matched_rule + ":", matched_token)
+
 for m in matches:
     print("")
     # Each token_id corresponds to one pattern dict
@@ -62,4 +65,4 @@ for m in matches:
     for i in range(len(token_ids)):
         matched_token = doc[token_ids[i]].text
         matched_rule = copula_pattern[i]["RIGHT_ID"]
-        print(matched_rule + ":", matched_token)
+        process_matched(matched_token, matched_rule)
