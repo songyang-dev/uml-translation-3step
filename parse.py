@@ -1,9 +1,9 @@
 # Parse the English text using rules
 
 import sys
-if len(sys.argv) != 2:
+if len(sys.argv) != 3:
     print(
-        "Usage: py parse.py kind [ < pipe text through stdin ]", file=sys.stderr)
+        "Usage: py parse.py kind out_file [ < pipe text through stdin ]", file=sys.stderr)
     exit(1)
 
 if sys.argv[1] != "class" and sys.argv[1] != "rel":
@@ -13,6 +13,7 @@ if sys.argv[1] != "class" and sys.argv[1] != "rel":
 from spacy.matcher import DependencyMatcher
 import spacy
 
+out_path = sys.argv[2]
 
 # Receives text to parse through stdin
 text = sys.stdin.read()
@@ -55,14 +56,35 @@ matches = matcher(doc)
 
 print("# of matches: {matches}".format(matches=len(matches)))
 
-def process_matched(matched_token, matched_rule):
-    print(matched_rule + ":", matched_token)
+# Abstract representation of a UML model
+import ecore
+from pyecore.ecore import EString
 
-for m in matches:
-    print("")
-    # Each token_id corresponds to one pattern dict
+leading_class_name : str
+uml_classes = []
+
+# Process a copula match
+def process_match(doc, copula_pattern, m):
     match_id, token_ids = m
+
+    current_semantics = {}
+
     for i in range(len(token_ids)):
         matched_token = doc[token_ids[i]].text
         matched_rule = copula_pattern[i]["RIGHT_ID"]
-        process_matched(matched_token, matched_rule)
+
+        current_semantics[matched_rule] = matched_token
+
+    eclass = ecore.declare_class(current_semantics["subject"].capitalize())
+    ecore.attach_attribute(current_semantics["object"], of=eclass, etype=EString)
+
+    uml_classes.append(eclass)
+    global leading_class_name
+    leading_class_name = current_semantics["subject"].capitalize()
+
+for m in matches:
+    # Each token_id corresponds to one pattern dict
+    process_match(doc, copula_pattern, m)
+
+pack = ecore.package_up(uml_classes, leading_class_name)
+ecore.save_package(pack, out_path)
