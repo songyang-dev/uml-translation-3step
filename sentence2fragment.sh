@@ -2,11 +2,9 @@
 
 # Pipeline for transforming sentence to fragment
 if [ $# -ne 3 ]; then
-    echo "Usage: ./sentence2fragment.sh [class | rel] out_no_extension \"Your sentence.\""
+    echo "Usage: ./sentence2fragment.sh [class | rel] out_path_no_extension \"Your sentence.\""
     exit 1
 fi
-
-shopt -s expand_aliases
 
 kind="$1"
 out="$2"

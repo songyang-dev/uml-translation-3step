@@ -1,6 +1,7 @@
 # Parse the English text using rules
 
 import sys
+from numpy import string_
 if len(sys.argv) != 3:
     print(
         "Usage: py parse.py kind out_file [ < pipe text through stdin ]", file=sys.stderr)
@@ -16,7 +17,8 @@ import spacy
 out_path = sys.argv[2]
 
 # Receives text to parse through stdin
-text = sys.stdin.read()
+text = "The key to a good life is music."
+# text = sys.stdin.read()
 
 
 nlp = spacy.load("en_core_web_sm")
@@ -37,7 +39,7 @@ copula_pattern = [
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj", "expl"]}}
+        "RIGHT_ATTRS": {"DEP": "nsubj"}
     },
     # object of the verb
     {
@@ -48,24 +50,27 @@ copula_pattern = [
     }
 ]
 
-matcher = DependencyMatcher(nlp.vocab)
-matcher.add("CLASS", [copula_pattern])
-matches = matcher(doc)
+# Relationship pattern
 
-#print(matches)
-
-print("# of matches: {matches}".format(matches=len(matches)))
 
 # Abstract representation of a UML model
 import ecore
 from pyecore.ecore import EString
 
-leading_class_name : str
+leading_class_name = ""
 uml_classes = []
 
+def on_match(matcher, doc, i, matches):
+
+    match_id, _ = matches[i]
+    string_id = nlp.vocab.strings[match_id]
+
+    if string_id == "CLASS":
+        process_copula(doc, matches[i])
+
 # Process a copula match
-def process_match(doc, copula_pattern, m):
-    match_id, token_ids = m
+def process_copula(doc, m):
+    _, token_ids = m
 
     current_semantics = {}
 
@@ -82,9 +87,19 @@ def process_match(doc, copula_pattern, m):
     global leading_class_name
     leading_class_name = current_semantics["subject"].capitalize()
 
-for m in matches:
-    # Each token_id corresponds to one pattern dict
-    process_match(doc, copula_pattern, m)
+
+# Start parsing
+matcher = DependencyMatcher(nlp.vocab)
+
+if sys.argv[1] == "class":
+    matcher.add("CLASS", [copula_pattern], on_match=on_match)
+elif sys.argv[1] == "rel":
+    matcher.add("REL", [], on_match=on_match)
+matches = matcher(doc)
+
+#print(matches)
+
+print("# of matches: {matches}".format(matches=len(matches)))
 
 pack = ecore.package_up(uml_classes, leading_class_name)
 ecore.save_package(pack, out_path)
