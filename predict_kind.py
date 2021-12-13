@@ -4,7 +4,7 @@ import sys
 import pickle
 
 if len(sys.argv) != 2:
-    print("Usage: py evaluate.py text-to-classify-typed", file=sys.stderr)
+    print("Usage: py predict_kind.py text-to-classify-typed", file=sys.stderr)
     exit(1)
 
 # from sklearn.feature_extraction.text import CountVectorizer
