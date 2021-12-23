@@ -10,6 +10,6 @@ kind="$1"
 out="$2"
 sentence="$3"
 
-echo "$sentence" | python parse.py "$kind" "$out".ecore
-python ecore2plant.py "$out".ecore > "$out".plantuml
-java -jar ~/Documents/Libs/JavaLib/plantuml.jar "$out".plantuml
+echo "$sentence" | python parse.py "$kind" "$out".plantuml
+# python ecore2plant.py "$out".ecore > "$out".plantuml
+java -jar ~/Documents/Libs/JavaLib/plantuml.jar "$out".plantuml # make sure you have plantuml
