@@ -2,7 +2,8 @@
 The algorithm has three steps, starting with an English text.
 
 ## Installation
-To run this repo, you need Python 3 and several Python modules. All can be installed via `pip`.
+To run this repo, you need Python 3 and several Python modules. All can be installed via `pip`. A `requirements.txt` file is provided so you can `pip install -r requirements.txt`.
+* numpy
 * pandas
 * scikit-learn
 * spacy, then download its small English model

@@ -86,8 +86,8 @@ vec, trained_model = train("tfidf", "bernoulliNB")
 test(vec, trained_model)
 
 import pickle
-pickle.dump(trained_model, open("model.pickle", "wb"))
-pickle.dump(vec, open("model.vec", "wb"))
+pickle.dump(trained_model, open("bernoulli.pickle", "wb"))
+pickle.dump(vec, open("tfidf.vec", "wb"))
 
 # print(test(vec, trained_model))
 

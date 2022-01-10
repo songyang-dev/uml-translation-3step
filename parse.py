@@ -1,6 +1,7 @@
 # Parse the English text using rules
 
 import sys
+from numpy import ldexp
 if len(sys.argv) != 3:
     print(
         "Usage: py parse.py kind out_file [ < pipe text through stdin ]", file=sys.stderr)
@@ -56,6 +57,10 @@ copula_class = [
 relationship_pattern = [
     # Pattern is: A (noun for class A) has (numerical multiplicity) (noun for class B)
     # Extracted info: Class A has a relationship of a certain multiplicity with Class B
+
+    # Procedure: 
+    # 1. use the dependency matcher for general syntax
+    # 2. use the phrase matcher for multiplicities
     {
         "RIGHT_ID": "verb",
         "RIGHT_ATTRS": {"LEMMA": "have"}
@@ -108,25 +113,38 @@ def on_match(matcher, doc, i, matches):
 def process_copula_class(doc, m):
     _, token_ids = m
 
-    current_semantics = {}
-
-    for i in range(len(token_ids)):
-        matched_token = doc[token_ids[i]].text
-        matched_rule = copula_class[i]["RIGHT_ID"]
-
-        current_semantics[matched_rule] = matched_token
+    current_semantics = get_semantics(doc, token_ids, copula_class)
 
     eclass = uml.UMLClass(current_semantics["subject"].capitalize(), "class")
 
     uml_classes.append(eclass)
     global leading_class_name
-    leading_class_name = current_semantics["subject"].capitalize()
+    leading_class_name = eclass.name
+
+def get_semantics(doc, token_ids, pattern):
+    current_semantics = {}
+
+    for i in range(len(token_ids)):
+        matched_token = doc[token_ids[i]].text
+        matched_rule = pattern[i]["RIGHT_ID"]
+
+        current_semantics[matched_rule] = matched_token
+    return current_semantics
 
 def process_relationship(doc, m):
-    pass
+    _, token_ids = m
+
+    semantics = get_semantics(doc, token_ids, relationship_pattern)
+
+    source_class = uml.UMLClass(semantics["subject"].capitalize(), "association")
+    destination_class = uml.UMLClass(semantics["object"].capitalize(), "class")
+
+    uml_classes.extend((source_class, destination_class))
+    global leading_class_name
+    leading_class_name = source_class.name
 
 def process_multiplicity(doc, m):
-    pass
+    print(m)
 
 
 # ------------------------------------------------------------------
@@ -137,7 +155,7 @@ if sys.argv[1] == "class":
     matcher.add("copula class", [copula_class], on_match=on_match)
 elif sys.argv[1] == "rel":
     matcher.add("REL", [], on_match=on_match)
-    matcher.add("multiplicity", [multiplicity_pattern], on_match=on_match)
+    matcher.add("multiplicity", [multiplicity_pattern], on_match=on_match) # cannot do this to dependency matcher, must use normal matcher
 matches = matcher(doc)
 
 #print(matches)
