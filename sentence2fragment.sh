@@ -1,6 +1,6 @@
 #!/bin/bash
 
-plantuml="~/Documents/My Documents/Scripts/Libs/plantuml/plantuml-1.2021.16.jar" # where your plantuml.jar is
+plantuml=~/Documents/My\ Documents/Scripts/Libs/plantuml/plantuml-1.2021.16.jar # where your plantuml.jar is
 
 # Pipeline for transforming sentence to fragment
 if [ $# -ne 3 ]; then

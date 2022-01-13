@@ -1,28 +1,19 @@
 # Parse the English text using rules
 
 import sys
-from numpy import ldexp
+import uml
+
 if len(sys.argv) != 3:
     print(
-        "Usage: py parse.py kind out_file [ < pipe text through stdin ]", file=sys.stderr)
+        "Usage: py parse.py kind out_file [ < pipe text through stdin ]",
+        file=sys.stderr,
+    )
     exit(1)
 
 if sys.argv[1] != "class" and sys.argv[1] != "rel":
     print("Acceptable kinds are: class | rel")
     exit(1)
 
-from spacy.matcher import DependencyMatcher
-import spacy
-
-out_path = sys.argv[2]
-
-# Receives text to parse through stdin
-# text = "The key to a good life is music."
-text = sys.stdin.read()
-
-
-nlp = spacy.load("en_core_web_sm")
-doc = nlp(text)
 
 # ------------------------------------------------------------
 # Extract features for one class
@@ -31,137 +22,97 @@ doc = nlp(text)
 copula_class = [
     # Pattern is: "The (subject) is a class ..."
     # Extracted info: A class with no attribute
-
     # anchor token: verb "to be"
-    {
-        "RIGHT_ID": "copula",
-        "RIGHT_ATTRS": {"LEMMA": "be"}
-    },
+    {"RIGHT_ID": "copula", "RIGHT_ATTRS": {"LEMMA": "be"}},
     # subject of the verb
     {
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"}
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
     },
     # object of the verb
     {
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "attr", "LEMMA": "class"}
-    }
+        "RIGHT_ATTRS": {"DEP": "attr", "LEMMA": "class"},
+    },
 ]
+
+# Process a copula match
+def process_copula_class(current_semantics: dict):
+
+    eclass = uml.UMLClass(current_semantics["subject"].capitalize(), "class")
+
+    package = uml.UML(eclass.name)
+    package.classes.append(eclass)
+    return package
+
 
 # Relationship pattern
 relationship_pattern = [
     # Pattern is: A (noun for class A) has (numerical multiplicity) (noun for class B)
     # Extracted info: Class A has a relationship of a certain multiplicity with Class B
-
-    # Procedure: 
+    # Procedure:
     # 1. use the dependency matcher for general syntax
     # 2. use the phrase matcher for multiplicities
-    {
-        "RIGHT_ID": "verb",
-        "RIGHT_ATTRS": {"LEMMA": "have"}
-    },
+    {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"LEMMA": "have"}},
     {
         "LEFT_ID": "verb",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"}
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
     },
     {
         "LEFT_ID": "verb",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "dobj"}
+        "RIGHT_ATTRS": {"DEP": "dobj"},
     },
     {
         "LEFT_ID": "object",
         "REL_OP": ">",
         "RIGHT_ID": "number",
-        "RIGHT_ATTRS": {"POS": "NUM"}
-    }
+        "RIGHT_ATTRS": {"POS": "NUM"},
+    },
 ]
 
+def process_relationship_pattern(current_semantics: dict):
+    source = uml.UMLClass(current_semantics["subject"].capitalize(), "rel")
+    destination = uml.UMLClass(current_semantics["object"].capitalize(), "rel")
+
+    source.association(destination)
+
+    package = uml.UML(source.name)
+    package.classes.extend([source, destination])
+    return package
+    
+
 # Multiplicity pattern
-multiplicity_terms = ["0 or several", "one and only one", "one or more", "zero or more", "zero or one", "at least one"]
-multiplicity_pattern = [nlp.make_doc(text) for text in multiplicity_terms]
-
-# Abstract representation of a UML model
-import uml
-
-leading_class_name = ""
-uml_classes = []
-
-def on_match(matcher, doc, i, matches):
-
-    match_id, _ = matches[i]
-    string_id = nlp.vocab.strings[match_id]
-
-    if string_id == "copula class":
-        process_copula_class(doc, matches[i])
-
-    elif string_id == "REL":
-        process_relationship(doc, matches[i])
-
-    elif string_id == "multiplicity":
-        process_multiplicity(doc, matches[i])
-
-# Process a copula match
-def process_copula_class(doc, m):
-    _, token_ids = m
-
-    current_semantics = get_semantics(doc, token_ids, copula_class)
-
-    eclass = uml.UMLClass(current_semantics["subject"].capitalize(), "class")
-
-    uml_classes.append(eclass)
-    global leading_class_name
-    leading_class_name = eclass.name
-
-def get_semantics(doc, token_ids, pattern):
-    current_semantics = {}
-
-    for i in range(len(token_ids)):
-        matched_token = doc[token_ids[i]].text
-        matched_rule = pattern[i]["RIGHT_ID"]
-
-        current_semantics[matched_rule] = matched_token
-    return current_semantics
-
-def process_relationship(doc, m):
-    _, token_ids = m
-
-    semantics = get_semantics(doc, token_ids, relationship_pattern)
-
-    source_class = uml.UMLClass(semantics["subject"].capitalize(), "association")
-    destination_class = uml.UMLClass(semantics["object"].capitalize(), "class")
-
-    uml_classes.extend((source_class, destination_class))
-    global leading_class_name
-    leading_class_name = source_class.name
-
-def process_multiplicity(doc, m):
-    print(m)
+multiplicity_terms = [
+    "0 or several",
+    "one and only one",
+    "one or more",
+    "zero or more",
+    "zero or one",
+    "at least one",
+]
 
 
 # ------------------------------------------------------------------
 # Start parsing
-matcher = DependencyMatcher(nlp.vocab)
+from spacy_patterns import parse
+
+out_path = sys.argv[2]
+
+# Receives text to parse through stdin
+# text = "The key to a good life is music."
+text = sys.stdin.read()
 
 if sys.argv[1] == "class":
-    matcher.add("copula class", [copula_class], on_match=on_match)
+    pack = parse(text, (sys.argv[1], [copula_class], process_copula_class))
 elif sys.argv[1] == "rel":
-    matcher.add("REL", [], on_match=on_match)
-    matcher.add("multiplicity", [multiplicity_pattern], on_match=on_match) # cannot do this to dependency matcher, must use normal matcher
-matches = matcher(doc)
+    pack = parse(text, (sys.argv[1], [relationship_pattern], process_relationship_pattern))
 
-#print(matches)
-
-print("# of matches: {matches}".format(matches=len(matches)))
-
-pack = uml.UML(leading_class_name)
-pack.classes = uml_classes
 pack.save(out_path)
