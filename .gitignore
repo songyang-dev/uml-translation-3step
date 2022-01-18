@@ -1,3 +1,4 @@
 data/
 test/
 __pycache__
+.mypy_cache

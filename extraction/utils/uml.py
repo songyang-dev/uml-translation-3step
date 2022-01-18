@@ -5,6 +5,7 @@
 # Simple associations between classes including multiplicity and names
 
 from io import TextIOWrapper
+import os
 from typing import List, Tuple
 
 
@@ -82,6 +83,7 @@ class UML:
 
     def save(self, path: str):
         
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         file_object = open(path, "w")
         self._to_plantuml(file_object)
         file_object.close()
@@ -89,7 +91,7 @@ class UML:
         return self
 
     # https://plantuml.com/class-diagram
-    def _to_plantuml(self, file_object: TextIOWrapper):
+    def _to_plantuml(self, file_object):
         
         print("@startuml", file=file_object)
         print("!theme plain", file=file_object)

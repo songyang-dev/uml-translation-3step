@@ -12,6 +12,7 @@ kind="$1"
 out="$2"
 sentence="$3"
 
-echo "$sentence" | python parse.py "$kind" "$out".plantuml
+cd extraction
+echo "$sentence" | python parse.py "$kind" ../"$out".plantuml
 # python ecore2plant.py "$out".ecore > "$out".plantuml
-java -jar "$plantuml" "$out".plantuml # make sure you have plantuml
+java -jar "$plantuml" ../"$out".plantuml # make sure you have plantuml

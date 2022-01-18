@@ -1,12 +1,15 @@
 # Classifies the data
 
 import sys
-if len(sys.argv) != 2:
-    print("Usage: py classify.py data-file", file=sys.stderr)
+if len(sys.argv) != 4:
+    print("Usage: py classify.py data-file model vectorizer", file=sys.stderr)
+    print("ex: py classify.py ../data/fragments.csv bernoulliNB tfidf", file=sys.stderr)
     exit(1)
 
 import pandas as pd
 df = pd.read_csv(sys.argv[1])
+model_type = sys.argv[2]
+vectorizer_type = sys.argv[3]
 
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(df["english"], df["kind"], test_size=0.2)
@@ -82,12 +85,12 @@ def test(vec, trained_model):
 
     return pd.DataFrame(data={"english": X_test, "truth": y_test, "prediction": pred})
 
-vec, trained_model = train("tfidf", "bernoulliNB")
+vec, trained_model = train(vectorizer_type, model_type)
 test(vec, trained_model)
 
 import pickle
-pickle.dump(trained_model, open("bernoulli.pickle", "wb"))
-pickle.dump(vec, open("tfidf.vec", "wb"))
+pickle.dump(trained_model, open(f"{model_type}.pickle", "wb"))
+pickle.dump(vec, open(f"{vectorizer_type}.vec", "wb"))
 
 # print(test(vec, trained_model))
 

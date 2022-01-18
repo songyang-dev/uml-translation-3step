@@ -1,7 +1,9 @@
-# Parse the English text using rules
-
+"""
+Parse the English text using rules
+"""
+import os
 import sys
-import uml
+from utils import uml
 
 if len(sys.argv) != 3:
     print(
@@ -78,6 +80,7 @@ relationship_pattern = [
     },
 ]
 
+
 def process_relationship_pattern(current_semantics: dict):
     source = uml.UMLClass(current_semantics["subject"].capitalize(), "rel")
     destination = uml.UMLClass(current_semantics["object"].capitalize(), "rel")
@@ -87,7 +90,7 @@ def process_relationship_pattern(current_semantics: dict):
     package = uml.UML(source.name)
     package.classes.extend([source, destination])
     return package
-    
+
 
 # Multiplicity pattern
 multiplicity_terms = [
@@ -111,8 +114,11 @@ out_path = sys.argv[2]
 text = sys.stdin.read()
 
 if sys.argv[1] == "class":
-    pack = parse(text, (sys.argv[1], [copula_class], process_copula_class))
+    PACKAGE = parse(text, (sys.argv[1], [copula_class], process_copula_class))
 elif sys.argv[1] == "rel":
-    pack = parse(text, (sys.argv[1], [relationship_pattern], process_relationship_pattern))
+    PACKAGE = parse(
+        text, (sys.argv[1], [relationship_pattern], process_relationship_pattern)
+    )
 
-pack.save(out_path)
+path = os.path.abspath(os.path.dirname(__file__))
+PACKAGE.save(os.path.join(path, out_path))

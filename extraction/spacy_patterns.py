@@ -2,10 +2,8 @@
 Handles the parsing logic
 """
 
-from os import urandom
-from struct import pack
 from typing import Callable, Tuple
-import uml
+from utils import uml
 import spacy
 
 
