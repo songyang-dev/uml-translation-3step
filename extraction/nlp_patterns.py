@@ -31,11 +31,12 @@ class BuiltUML:
 
         self.matcher.add(pattern_name, pattern, on_match=store_uml_callback)
 
-    def parse(self):
+    def parse(self, verbose: bool = True):
         matched_results = self.matcher(self.doc)
         
-        # Number of matches
-        print(f"Matches: {len(matched_results)}")
+        if verbose:
+            # Number of matches
+            print(f"Matches: {len(matched_results)}")
         
         return self.uml_result
 
@@ -44,6 +45,9 @@ class BuiltUML:
 
     def clear_rules(self):
         self.matcher = spacy.matcher.DependencyMatcher(self.nlp.vocab)
+
+    def clear_result(self):
+        self.uml_result = None
 
     @staticmethod
     def get_semantics(doc, token_ids, pattern):
