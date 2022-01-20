@@ -10,11 +10,11 @@ class BuiltUML:
 
     def __init__(self, sentence: str) -> None:
         # load spacy
-        nlp = spacy.load("en_core_web_sm")
-        self.doc = nlp(sentence)
+        self.nlp = spacy.load("en_core_web_sm")
+        self.doc = self.nlp(sentence)
 
         # Start parsing
-        self.matcher = spacy.matcher.DependencyMatcher(nlp.vocab)
+        self.matcher = spacy.matcher.DependencyMatcher(self.nlp.vocab)
 
         # resulting UML
         self.uml_result: uml.UML = None
@@ -25,7 +25,7 @@ class BuiltUML:
 
             _, token_ids = matches[i]
 
-            current_semantics = BuiltUML.get_semantics(doc, token_ids, pattern.pop())
+            current_semantics = BuiltUML.get_semantics(doc, token_ids, pattern[0])
 
             self.uml_result = matched_action(current_semantics)
 
@@ -38,6 +38,12 @@ class BuiltUML:
         print(f"Matches: {len(matched_results)}")
         
         return self.uml_result
+
+    def set_sentence(self, sentence: str):
+        self.doc = self.nlp(sentence)
+
+    def clear_rules(self):
+        self.matcher = spacy.matcher.DependencyMatcher(self.nlp.vocab)
 
     @staticmethod
     def get_semantics(doc, token_ids, pattern):
