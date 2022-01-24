@@ -27,6 +27,7 @@ PREPROCESSED_CSV = os.path.join(os.getcwd(), argv[1])
 
 FRAGMENTS = pd.read_csv(PREPROCESSED_CSV, header=0, index_col=0)
 
+# Test one rule on the data set
 def test_rule(kind: str, rule_name: str, rule_pattern: list[list[dict]], on_match: Callable[[dict], uml.UML]):
   rule = nlp_patterns.BuiltUML("")
   rule.add_rule(rule_name, rule_pattern, on_match)
@@ -63,16 +64,26 @@ def test_rule(kind: str, rule_name: str, rule_pattern: list[list[dict]], on_matc
       failed_fragments_indices.append(index)
 
   # consider a semantic test to check for correctness
-
-  print(f"Rule: {rule_name}", termcolor.colored(f"Passed: {passed}", 'green'), termcolor.colored(f"Failed: {failed}", 'red'))
+  
+  print(f"{kind.capitalize()} rule: {rule_name}", termcolor.colored(f"Passed: {passed}", 'green'), termcolor.colored(f"Failed: {failed}", 'red'), sep='\t')
 
   with open(os.path.join(TEMP_FOLDER, f"{kind}_{rule_name}_passed.csv"), "w") as pass_log:
-    pd.DataFrame({"index": passed_fragments_indices, "fragment": passed_fragments}).to_csv(pass_log)
+    passed_details = pd.DataFrame({"index": passed_fragments_indices, "fragment": passed_fragments})
+    passed_details.to_csv(pass_log)
 
   with open(os.path.join(TEMP_FOLDER, f"{kind}_{rule_name}_failed.csv"), "w") as fail_log:
-    pd.DataFrame({"index": failed_fragments_indices, "fragment": failed_fragments}).to_csv(fail_log)
+    failed_details = pd.DataFrame({"index": failed_fragments_indices, "fragment": failed_fragments})
+    failed_details.to_csv(fail_log)
 
+  return passed_details, failed_details
 
 
 if __name__ == "__main__":
+  print("Extraction test suite")
+  print()
+  print("OVERVIEW")
   test_rule("class", "simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
+  test_rule("rel", "to have with multiplicity", [nlp_patterns.relationship_pattern], nlp_patterns.process_relationship_pattern)
+  print()
+  print("DETAILS")
+  print("Individual cases are logged at \"{}\"".format(TEMP_FOLDER))

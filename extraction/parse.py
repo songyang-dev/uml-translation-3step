@@ -23,7 +23,7 @@ import nlp_patterns
 out_path = sys.argv[2]
 
 # Receives text to parse through stdin
-# text = "The key to a good life is music."
+# text = "The key has zero or more teeth."
 text = sys.stdin.read()
 
 if sys.argv[1] == "class":
