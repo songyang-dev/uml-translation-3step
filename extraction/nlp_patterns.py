@@ -1,6 +1,7 @@
 """
 Extract features for one class
 """
+from sys import stderr
 from typing import Callable
 from utils import uml
 import spacy
@@ -8,7 +9,6 @@ from spacy.matcher import PhraseMatcher
 
 # Helper class to get the uml result
 class BuiltUML:
-
     def __init__(self, sentence: str) -> None:
         # load spacy
         self.nlp_model = spacy.load("en_core_web_sm")
@@ -21,8 +21,12 @@ class BuiltUML:
         # resulting UML
         self.uml_result: uml.UML = None
 
-    def add_rule(self, pattern_name: str, pattern: list[list[dict]], matched_action: Callable[[dict, "BuiltUML"], uml.UML]):
-
+    def add_rule(
+        self,
+        pattern_name: str,
+        pattern: list[list[dict]],
+        matched_action: Callable[[dict, "BuiltUML"], uml.UML],
+    ):
         def store_uml_callback(matcher, doc, i, matches):
 
             _, token_ids = matches[i]
@@ -35,14 +39,15 @@ class BuiltUML:
 
     def parse(self, verbose: bool = True):
         matched_results = self.matcher(self.spacy_doc)
-        
+
         if verbose:
             # Number of matches
             print(f"Matches: {len(matched_results)}")
-        
+
         return self.uml_result
 
     def set_sentence(self, sentence: str):
+        self.sentence
         self.spacy_doc = self.nlp_model(sentence)
 
     def clear_rules(self):
@@ -67,6 +72,7 @@ class BuiltUML:
 
         current_semantics["positions"] = current_positions
         return current_semantics
+
 
 # ------------------------------------------
 # Class pattern
@@ -102,6 +108,7 @@ def process_copula_class(current_semantics: dict, build_in_progress: BuiltUML):
     package.classes.append(eclass)
     return package
 
+
 # ----------------------------------------------
 
 # Relationship pattern
@@ -128,22 +135,36 @@ relationship_pattern = [
         "LEFT_ID": "object",
         "REL_OP": ">",
         "RIGHT_ID": "number",
-        "RIGHT_ATTRS": {"POS": "NUM"},
+        "RIGHT_ATTRS": {"POS": "NUM", "DEP": "nummod"},
     },
+    {
+        "LEFT_ID": "number",
+        "REL_OP": ">",
+        "RIGHT_ID": "adverb",
+        "RIGHT_ATTRS": {"DEP": "advmod"}
+    }
 ]
 
 # Multiplicity pattern
-multiplicity_terms = [
-    "0 or several",
-    "one and only one",
-    "one or more",
-    "zero or more",
-    "zero or one",
-    "at least one",
-]
+multiplicity_conversion = {
+    "0 or several": "0..*",
+    "one and only one": "1..1",
+    "one or more": "1..*",
+    "zero or more": "0..*",
+    "zero or one": "0..1",
+    "at least one": "1..*",
+    "exactly one": "1..1",
+    "0 or more": "0..*",
+    "0 or many": "0..*",
+    "0 more": "0..*",
+    "one or several": "1..*",
+    "0 or 1": "0..1",
+    "one and only": "1..1",
+}
+
 
 def process_relationship_pattern(current_semantics: dict, build_in_progress: BuiltUML):
-    
+
     # Get classes
     source = uml.UMLClass(current_semantics["subject"].capitalize(), "rel")
     destination = uml.UMLClass(current_semantics["object"].capitalize(), "rel")
@@ -151,7 +172,9 @@ def process_relationship_pattern(current_semantics: dict, build_in_progress: Bui
     # Get multiplicity
     matcher = PhraseMatcher(build_in_progress.nlp_model.vocab)
     # Only run nlp.make_doc to speed things up
-    patterns = [build_in_progress.nlp_model.make_doc(text) for text in multiplicity_terms]
+    patterns = [
+        build_in_progress.nlp_model.make_doc(text) for text in multiplicity_conversion.keys()
+    ]
     matcher.add("Multiplicities", patterns)
 
     # found multiplicity
@@ -160,7 +183,7 @@ def process_relationship_pattern(current_semantics: dict, build_in_progress: Bui
     matches = matcher(build_in_progress.spacy_doc)
     for match_id, start, end in matches:
         span = build_in_progress.spacy_doc[start:end]
-        
+
         # # This would trigger if there are many matches for the multiplicity term in the sentence
         # if start != current_semantics["positions"][build_in_progress.spacy_doc[start].text]:
         #     raise Exception("Index of multiplicity does not match with dependency parse results")
@@ -170,16 +193,12 @@ def process_relationship_pattern(current_semantics: dict, build_in_progress: Bui
         break
 
     # Build UML
-    multiplicity_conversion = {
-        "0 or several": "0..*",
-        "one and only one": "1..1",
-        "one or more": "1..*",
-        "zero or more": "0..*",
-        "zero or one": "0..1",
-        "at least one": "1..*",
-    }
 
-    source.association(destination, multiplicity_conversion[found_multiplicity])
+    try:
+        source.association(destination, multiplicity_conversion[found_multiplicity])
+    except KeyError:  # Unknown multiplicity
+        # print(build_in_progress.spacy_doc.text, file=stderr)
+        return None
 
     package = uml.UML(source.name)
     package.classes.extend([source, destination])
