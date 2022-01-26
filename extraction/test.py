@@ -5,7 +5,7 @@ from sys import argv, stderr
 from typing import Callable
 
 if len(argv) != 2:
-  print("Usage: py run.py processed-csv", file=stderr)
+  print("Usage: py test.py processed-csv", file=stderr)
   exit(1)
 
 import os
@@ -49,10 +49,10 @@ def test_rule(kind: str, rule_name: str, rule_pattern: list[list[dict]], on_matc
 
     rule.clear_result()
     rule.set_sentence(fragment["english"])
-    rule.parse(verbose=False)
+    result = rule.parse(verbose=False)
 
     # matches
-    if rule.uml_result != None:
+    if result != None:
       passed += 1
       passed_fragments.append(fragment["english"])
       passed_fragments_indices.append(index)
@@ -81,9 +81,12 @@ def test_rule(kind: str, rule_name: str, rule_pattern: list[list[dict]], on_matc
 if __name__ == "__main__":
   print("Extraction test suite")
   print()
+  print(termcolor.colored("UNIT PARSING", "yellow"))
   print("OVERVIEW")
   test_rule("class", "simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
   test_rule("rel", "to have with multiplicity", [nlp_patterns.relationship_pattern], nlp_patterns.process_relationship_pattern)
   print()
   print("DETAILS")
   print("Individual cases are logged at \"{}\"".format(TEMP_FOLDER))
+  print()
+  print(termcolor.colored("SEMANTIC EVALUATION", "yellow"))

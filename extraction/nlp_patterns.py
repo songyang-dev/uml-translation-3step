@@ -19,7 +19,7 @@ class BuiltUML:
         self.matcher = spacy.matcher.DependencyMatcher(self.nlp_model.vocab)
 
         # resulting UML
-        self.uml_result: uml.UML = None
+        self.uml_result: dict[str, uml.UML] = {}
 
     def add_rule(
         self,
@@ -33,7 +33,7 @@ class BuiltUML:
 
             current_semantics = BuiltUML.get_semantics(doc, token_ids, pattern[0])
 
-            self.uml_result = matched_action(current_semantics, self)
+            self.uml_result[pattern_name] = matched_action(current_semantics, self)
 
         self.matcher.add(pattern_name, pattern, on_match=store_uml_callback)
 
@@ -44,7 +44,17 @@ class BuiltUML:
             # Number of matches
             print(f"Matches: {len(matched_results)}")
 
-        return self.uml_result
+        return self.select_parsed_result()
+
+    def select_parsed_result(self):
+        """
+        Combine all the results from the different rules together to form a fragment
+        """
+        if len(self.uml_result) > 0:
+            return list(self.uml_result.values())[0] # placeholder
+        else:
+            return None
+
 
     def set_sentence(self, sentence: str):
         self.sentence
@@ -54,7 +64,7 @@ class BuiltUML:
         self.matcher = spacy.matcher.DependencyMatcher(self.nlp_model.vocab)
 
     def clear_result(self):
-        self.uml_result = None
+        self.uml_result = {}
 
     @staticmethod
     def get_semantics(doc, token_ids, pattern):

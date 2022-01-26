@@ -36,7 +36,7 @@ if sys.argv[1] == "class":
 elif sys.argv[1] == "rel":
     extractor = nlp_patterns.BuiltUML(text)
     
-    extractor.add_rule("to have", [nlp_patterns.relationship_pattern], nlp_patterns.process_relationship_pattern)
+    extractor.add_rule("to have multiplicity", [nlp_patterns.relationship_pattern], nlp_patterns.process_relationship_pattern)
 
     PACKAGE = extractor.parse()
 
