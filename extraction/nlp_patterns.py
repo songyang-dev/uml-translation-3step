@@ -63,7 +63,7 @@ class BuiltUML:
         current_positions = {}
 
         for i in range(len(token_ids)):
-            matched_token = doc[token_ids[i]].text
+            matched_token = doc[token_ids[i]].lemma_
             matched_rule = pattern[i]["RIGHT_ID"]
 
             current_semantics[matched_rule] = matched_token
@@ -102,11 +102,33 @@ copula_class = [
 # Process a copula match
 def process_copula_class(current_semantics: dict, build_in_progress: BuiltUML):
 
-    eclass = uml.UMLClass(current_semantics["subject"].capitalize(), "class")
+    subject : str = current_semantics["subject"]
+
+    class_name = make_noun_pascal_case(current_semantics, build_in_progress, subject)
+
+
+    eclass = uml.UMLClass(class_name, "class")
 
     package = uml.UML(eclass.name)
     package.classes.append(eclass)
     return package
+
+def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, subject: str):
+    class_name = ""
+
+    for chunk in build_in_progress.spacy_doc.noun_chunks:
+        if current_semantics["positions"][subject] == chunk.root.i:
+            for token in chunk:
+                if token.is_stop:
+                    continue
+                else:
+                    if token == chunk.root:
+                        # remove plurals
+                        class_name += token.lemma_.capitalize()
+                    else:
+                        class_name += token.text.capitalize()
+
+    return class_name
 
 
 # ----------------------------------------------
@@ -166,8 +188,10 @@ multiplicity_conversion = {
 def process_relationship_pattern(current_semantics: dict, build_in_progress: BuiltUML):
 
     # Get classes
-    source = uml.UMLClass(current_semantics["subject"].capitalize(), "rel")
-    destination = uml.UMLClass(current_semantics["object"].capitalize(), "rel")
+    source_class_name = make_noun_pascal_case(current_semantics, build_in_progress, current_semantics["subject"])
+    source = uml.UMLClass(source_class_name, "rel")
+    destination_class_name = make_noun_pascal_case(current_semantics, build_in_progress, current_semantics["object"])
+    destination = uml.UMLClass(destination_class_name, "rel")
 
     # Get multiplicity
     matcher = PhraseMatcher(build_in_progress.nlp_model.vocab)
