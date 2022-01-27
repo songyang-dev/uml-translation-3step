@@ -9,7 +9,9 @@ from spacy.matcher import PhraseMatcher
 
 # Helper class to get the uml result
 class BuiltUML:
-    def __init__(self, sentence: str) -> None:
+    def __init__(self, sentence: str, kind: str) -> None:
+        self.kind = kind
+
         # load spacy
         self.nlp_model = spacy.load("en_core_web_sm")
         self.sentence = sentence
@@ -51,13 +53,27 @@ class BuiltUML:
         Combine all the results from the different rules together to form a fragment
         """
         if len(self.uml_result) > 0:
-            return list(self.uml_result.values())[0] # placeholder
+            found_umls = {}
+            for key, value in self.uml_result.items():
+                if value is None:
+                    continue
+                found_umls[key] = value
+            
+            if self.kind == "class":
+                if len(found_umls) == 1:
+                    return list(found_umls.values())[0]
+                
+                if "simple copula" in found_umls:
+                    return found_umls["simple copula"]
+                elif "expletive" in found_umls:
+                    return found_umls["expletive"]
+                    
         else:
             return None
 
 
     def set_sentence(self, sentence: str):
-        self.sentence
+        self.sentence = sentence
         self.spacy_doc = self.nlp_model(sentence)
 
     def clear_rules(self):
@@ -87,7 +103,7 @@ class BuiltUML:
 # ------------------------------------------
 # Class pattern
 
-# copula: The ... is ...
+# copula: The ... is a class ...
 copula_class = [
     # Pattern is: "The (subject) is a class ..."
     # Extracted info: A class with no attribute
@@ -123,11 +139,11 @@ def process_copula_class(current_semantics: dict, build_in_progress: BuiltUML):
     package.classes.append(eclass)
     return package
 
-def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, subject: str):
+def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, noun: str):
     class_name = ""
 
     for chunk in build_in_progress.spacy_doc.noun_chunks:
-        if current_semantics["positions"][subject] == chunk.root.i:
+        if current_semantics["positions"][noun] == chunk.root.i:
             for token in chunk:
                 if token.is_stop:
                     continue
@@ -141,10 +157,41 @@ def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, subjec
     return class_name
 
 
+# expletive: There is ...
+expletive = [
+    # Pattern is: There is (noun for class).
+    # Extracted info: An empty class with the name of the noun
+    {"RIGHT_ID": "copula", "RIGHT_ATTRS": {"LEMMA": "be"}},
+    {
+        "LEFT_ID": "copula",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "expl"},
+    },
+    # object of the verb
+    {
+        "LEFT_ID": "copula",
+        "REL_OP": ">",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"DEP": "attr", "POS": "NOUN"},
+    },
+]
+
+def process_expletive(current_semantics: dict, build_in_progress: BuiltUML):
+
+    # Get class
+    class_name = make_noun_pascal_case(current_semantics, build_in_progress, current_semantics["object"])
+
+    # Build UML
+    eclass = uml.UMLClass(class_name, "class")
+    package = uml.UML(eclass.name)
+    package.classes.append(eclass)
+    return package
+
 # ----------------------------------------------
 
 # Relationship pattern
-relationship_pattern = [
+to_have_multiplicity = [
     # Pattern is: A (noun for class A) has (numerical multiplicity) (noun for class B)
     # Extracted info: Class A has a relationship of a certain multiplicity with Class B
     # Procedure:
@@ -218,9 +265,9 @@ def process_relationship_pattern(current_semantics: dict, build_in_progress: Bui
     for match_id, start, end in matches:
         span = build_in_progress.spacy_doc[start:end]
 
-        # # This would trigger if there are many matches for the multiplicity term in the sentence
-        # if start != current_semantics["positions"][build_in_progress.spacy_doc[start].text]:
-        #     raise Exception("Index of multiplicity does not match with dependency parse results")
+        # This would trigger if there are many matches for the multiplicity term in the sentence
+        if not (start <= current_semantics["positions"][current_semantics["adverb"]] <= end):
+            print(build_in_progress.sentence, "This sentence has many multiplicities. Confusing.")
 
         found_multiplicity = span.text
 
