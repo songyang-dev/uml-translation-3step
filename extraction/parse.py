@@ -1,7 +1,6 @@
 """
 Parse the English text using rules
 """
-from asyncio.format_helpers import extract_stack
 import os
 import sys
 
@@ -30,7 +29,7 @@ if sys.argv[1] == "class":
     extractor = nlp_patterns.BuiltUML(text, "class")
     
     extractor.add_rule("simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
-    extractor.add_rule("expletive", [nlp_patterns.expletive], nlp_patterns.process_expletive)
+    extractor.add_rule("there is", [nlp_patterns.expletive], nlp_patterns.process_expletive)
     extractor.add_rule("compound", [nlp_patterns.compound], nlp_patterns.process_compound)
 
     PACKAGE = extractor.parse()

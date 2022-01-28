@@ -192,6 +192,11 @@ def process_expletive(current_semantics: dict, build_in_progress: BuiltUML):
     # Get class
     class_name = make_noun_pascal_case(current_semantics, build_in_progress, current_semantics["object"])
 
+    eclass = uml.UMLClass(class_name, "class")
+    package = uml.UML(eclass.name)
+    package.classes.append(eclass)
+    return package
+
 # general compound noun: The drawing interface format.
 compound = [
     # Pattern is: (anything compound) (Proper Noun, can't be "class")
@@ -212,10 +217,7 @@ def process_compound(current_semantics: dict, build: BuiltUML):
 
     noun_token = build.spacy_doc[current_semantics["positions"][current_semantics["noun"]]]
 
-    try:
-        class_name = make_noun_pascal_case(current_semantics, build, noun_token.lemma_)
-    except ValueError:
-        return None
+    class_name = make_noun_pascal_case(current_semantics, build, noun_token.lemma_)
     eclass = uml.UMLClass(class_name, "class")
     package = uml.UML(eclass.name)
     package.classes.append(eclass)
@@ -308,11 +310,7 @@ def process_relationship_pattern(current_semantics: dict, build_in_progress: Bui
 
     # Build UML
 
-    try:
-        source.association(destination, multiplicity_conversion[found_multiplicity])
-    except KeyError:  # Unknown multiplicity
-        # print(build_in_progress.spacy_doc.text, file=stderr)
-        return None
+    source.association(destination, multiplicity_conversion[found_multiplicity])
 
     package = uml.UML(source.name)
     package.classes.extend([source, destination])
