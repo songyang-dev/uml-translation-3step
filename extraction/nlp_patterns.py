@@ -35,7 +35,9 @@ class BuiltUML:
 
             current_semantics = BuiltUML.get_semantics(doc, token_ids, pattern[0])
 
-            self.uml_result[pattern_name] = matched_action(current_semantics, self)
+            result = matched_action(current_semantics, self)
+            if result is not None:
+                self.uml_result[pattern_name] = result
 
         self.matcher.add(pattern_name, pattern, on_match=store_uml_callback)
 
@@ -59,14 +61,17 @@ class BuiltUML:
                     continue
                 found_umls[key] = value
             
-            if self.kind == "class":
                 if len(found_umls) == 1:
                     return list(found_umls.values())[0]
                 
+            if self.kind == "class":
+
                 if "simple copula" in found_umls:
                     return found_umls["simple copula"]
                 elif "expletive" in found_umls:
                     return found_umls["expletive"]
+                elif "compound" in found_umls:
+                    return found_umls["compound"]
                     
         else:
             return None
@@ -142,8 +147,10 @@ def process_copula_class(current_semantics: dict, build_in_progress: BuiltUML):
 def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, noun: str):
     class_name = ""
 
+    noun_token = build_in_progress.spacy_doc[current_semantics["positions"][noun]]
+
     for chunk in build_in_progress.spacy_doc.noun_chunks:
-        if current_semantics["positions"][noun] == chunk.root.i:
+        if noun_token == chunk.root:
             for token in chunk:
                 if token.is_stop:
                     continue
@@ -154,6 +161,9 @@ def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, noun: 
                     else:
                         class_name += token.text.capitalize()
 
+    # in case the spacy model's noun chunks are wrong!
+    if class_name == "":
+        return noun_token.lemma_.capitalize()
     return class_name
 
 
@@ -173,7 +183,7 @@ expletive = [
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "attr", "POS": "NOUN"},
+        "RIGHT_ATTRS": {"DEP": "attr", "POS": {"IN": ["NOUN", "PROPN"]}},
     },
 ]
 
@@ -182,7 +192,30 @@ def process_expletive(current_semantics: dict, build_in_progress: BuiltUML):
     # Get class
     class_name = make_noun_pascal_case(current_semantics, build_in_progress, current_semantics["object"])
 
-    # Build UML
+# general compound noun: The drawing interface format.
+compound = [
+    # Pattern is: (anything compound) (Proper Noun, can't be "class")
+    # Extracted info: An empty class with the noun as the name.
+    {"RIGHT_ID": "noun", "RIGHT_ATTRS": {
+        "POS": {"IN": ["PROPN", "NOUN"]}, 
+        "LEMMA": {"NOT_IN": ["class", "Class"]},
+        "DEP": "ROOT"
+        # "DEP": {"NOT_IN": ["nsubj", "dobj", "compound", "pobj"]}
+        }
+    }
+]
+
+def process_compound(current_semantics: dict, build: BuiltUML):
+    # reject multi-sentences
+    if len(list(build.spacy_doc.sents)) > 1:
+        return None
+
+    noun_token = build.spacy_doc[current_semantics["positions"][current_semantics["noun"]]]
+
+    try:
+        class_name = make_noun_pascal_case(current_semantics, build, noun_token.lemma_)
+    except ValueError:
+        return None
     eclass = uml.UMLClass(class_name, "class")
     package = uml.UML(eclass.name)
     package.classes.append(eclass)
@@ -267,7 +300,7 @@ def process_relationship_pattern(current_semantics: dict, build_in_progress: Bui
 
         # This would trigger if there are many matches for the multiplicity term in the sentence
         if not (start <= current_semantics["positions"][current_semantics["adverb"]] <= end):
-            print(build_in_progress.sentence, "This sentence has many multiplicities. Confusing.")
+            print(build_in_progress.sentence, "This sentence has many multiplicities. Confusing.", file=stderr)
 
         found_multiplicity = span.text
 

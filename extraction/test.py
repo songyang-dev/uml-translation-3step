@@ -29,7 +29,7 @@ FRAGMENTS = pd.read_csv(PREPROCESSED_CSV, header=0, index_col=0)
 
 # Test one rule on the data set
 def test_rule(kind: str, rule_name: str, rule_pattern: list[list[dict]], on_match: Callable[[dict], uml.UML]):
-  rule = nlp_patterns.BuiltUML("")
+  rule = nlp_patterns.BuiltUML("", kind)
   rule.add_rule(rule_name, rule_pattern, on_match)
 
   # stats
@@ -85,6 +85,7 @@ if __name__ == "__main__":
   print("OVERVIEW")
   test_rule("class", "simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
   test_rule("class", "expletive", [nlp_patterns.expletive], nlp_patterns.process_expletive)
+  test_rule("class", "compound", [nlp_patterns.compound], nlp_patterns.process_compound)
   test_rule("rel", "to have with multiplicity", [nlp_patterns.to_have_multiplicity], nlp_patterns.process_relationship_pattern)
   print()
   print("DETAILS")

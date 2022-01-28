@@ -31,6 +31,7 @@ if sys.argv[1] == "class":
     
     extractor.add_rule("simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
     extractor.add_rule("expletive", [nlp_patterns.expletive], nlp_patterns.process_expletive)
+    extractor.add_rule("compound", [nlp_patterns.compound], nlp_patterns.process_compound)
 
     PACKAGE = extractor.parse()
 
@@ -44,5 +45,8 @@ elif sys.argv[1] == "rel":
 else:
     raise Exception("Unknown fragment kind:{}".format(sys.argv[1]))
 
-path = os.path.abspath(os.path.dirname(__file__))
-PACKAGE.save(os.path.join(path, out_path))
+if PACKAGE is not None:
+    path = os.path.abspath(os.path.dirname(__file__))
+    PACKAGE.save(os.path.join(path, out_path))
+else:
+    print("No match actually", file=sys.stderr)
