@@ -61,17 +61,22 @@ class BuiltUML:
                     continue
                 found_umls[key] = value
             
-                if len(found_umls) == 1:
-                    return list(found_umls.values())[0]
+            if len(found_umls) == 1:
+                return list(found_umls.values())[0]
                 
             if self.kind == "class":
 
                 if "simple copula" in found_umls:
                     return found_umls["simple copula"]
-                elif "expletive" in found_umls:
+                elif "there is" in found_umls:
                     return found_umls["expletive"]
                 elif "compound" in found_umls:
                     return found_umls["compound"]
+
+            elif self.kind == "rel":
+
+                if "to have with multiplicity" in found_umls:
+                    return found_umls["to have with multiplicity"]
                     
         else:
             return None

@@ -12,6 +12,7 @@ import os
 import pandas as pd
 import nlp_patterns
 from utils import uml
+import parse
 import termcolor
 
 
@@ -77,16 +78,73 @@ def test_rule(kind: str, rule_name: str, rule_pattern: list[list[dict]], on_matc
 
   return passed_details, failed_details
 
+def test_all_rules(kind: str):
+  extractor = nlp_patterns.BuiltUML("", kind)
+
+  if kind == "class":
+    parse.add_class_rules(extractor)
+  elif kind == "rel":
+    parse.add_rel_rules(extractor)
+
+  # stats
+  passed = 0
+  failed = 0
+
+  passed_fragments = []
+  passed_fragments_indices = []
+  failed_fragments = []
+  failed_fragments_indices = []
+
+  # test the rule on every fragment of the same kind
+  for index, fragment in FRAGMENTS.iterrows():
+    
+    if fragment["kind"] != kind:
+      continue
+    
+    extractor.clear_result()
+    extractor.set_sentence(fragment["english"])
+    result = extractor.parse(verbose=False)
+
+    # matches
+    if result != None:
+      passed += 1
+      passed_fragments.append(fragment["english"])
+      passed_fragments_indices.append(index)
+
+    # no match
+    else:
+      failed += 1
+      failed_fragments.append(fragment["english"])
+      failed_fragments_indices.append(index)
+
+    # consider a semantic test to check for correctness
+  
+  print(f"{kind.capitalize()} rule: ALL", termcolor.colored(f"Passed: {passed}", 'green'), termcolor.colored(f"Failed: {failed}", 'red'), sep='\t')
+
+  with open(os.path.join(TEMP_FOLDER, f"{kind}_ALL_passed.csv"), "w") as pass_log:
+    passed_details = pd.DataFrame({"index": passed_fragments_indices, "fragment": passed_fragments})
+    passed_details.to_csv(pass_log)
+
+  with open(os.path.join(TEMP_FOLDER, f"{kind}_ALL_failed.csv"), "w") as fail_log:
+    failed_details = pd.DataFrame({"index": failed_fragments_indices, "fragment": failed_fragments})
+    failed_details.to_csv(fail_log)
+
+  return passed_details, failed_details
 
 if __name__ == "__main__":
-  print("Extraction test suite")
-  print()
   print(termcolor.colored("UNIT PARSING", "yellow"))
   print("OVERVIEW")
   test_rule("class", "simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
   test_rule("class", "there is", [nlp_patterns.expletive], nlp_patterns.process_expletive)
   test_rule("class", "compound", [nlp_patterns.compound], nlp_patterns.process_compound)
   test_rule("rel", "to have with multiplicity", [nlp_patterns.to_have_multiplicity], nlp_patterns.process_relationship_pattern)
+  print()
+  print("DETAILS")
+  print("Individual cases are logged at \"{}\"".format(TEMP_FOLDER))
+  print()
+  print(termcolor.colored("ALL RULES", "yellow"))
+  test_all_rules("class")
+  test_all_rules("rel")
   print()
   print("DETAILS")
   print("Individual cases are logged at \"{}\"".format(TEMP_FOLDER))
