@@ -24,8 +24,8 @@ if __name__ == "__main__":
     out_path = sys.argv[2]
 
     # Receives text to parse through stdin
-    text = "There is a job."
-    # text = sys.stdin.read()
+    # text = "The red apple."
+    text = sys.stdin.read()
 
 def handle_class(text, verbose=True):
     extractor = nlp_patterns.BuiltUML(text, "class")
@@ -39,6 +39,7 @@ def add_class_rules(extractor):
     extractor.add_rule("simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
     extractor.add_rule("there is or exists", [nlp_patterns.expletive], nlp_patterns.process_expletive)
     extractor.add_rule("compound", [nlp_patterns.compound], nlp_patterns.process_compound)
+    extractor.add_rule("compound class explicit", [nlp_patterns.compound_class_explicit], nlp_patterns.process_compound_class_explicit)
 
 def handle_rel(text, verbose=True):
     extractor = nlp_patterns.BuiltUML(text, "rel")

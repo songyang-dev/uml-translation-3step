@@ -60,27 +60,28 @@ class BuiltUML:
                 if value is None:
                     continue
                 found_umls[key] = value
-            
+
             if len(found_umls) == 1:
                 return list(found_umls.values())[0]
-                
+
             if self.kind == "class":
 
                 if "simple copula" in found_umls:
                     return found_umls["simple copula"]
-                elif "there is" in found_umls:
+                elif "there is or exists" in found_umls:
                     return found_umls["expletive"]
                 elif "compound" in found_umls:
                     return found_umls["compound"]
+                elif "compound class explicit" in found_umls:
+                    return found_umls["compound class explicit"]
 
             elif self.kind == "rel":
 
                 if "to have with multiplicity" in found_umls:
                     return found_umls["to have with multiplicity"]
-                    
+
         else:
             return None
-
 
     def set_sentence(self, sentence: str):
         self.sentence = sentence
@@ -142,16 +143,16 @@ def process_copula_class(current_semantics: dict, build_in_progress: BuiltUML):
     and the values are the word captured by the pattern
     """
 
-    subject : str = current_semantics["subject"]
+    subject: str = current_semantics["subject"]
 
     class_name = make_noun_pascal_case(current_semantics, build_in_progress, subject)
-
 
     eclass = uml.UMLClass(class_name, "class")
 
     package = uml.UML(eclass.name)
     package.classes.append(eclass)
     return package
+
 
 def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, noun: str):
     class_name = ""
@@ -164,6 +165,10 @@ def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, noun: 
                 if token.is_stop:
                     continue
                 else:
+                    if token.text.isupper():  # acronym case
+                        class_name += token.text
+                        continue
+
                     if token == chunk.root:
                         # remove plurals
                         class_name += token.lemma_.capitalize()
@@ -172,6 +177,8 @@ def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, noun: 
 
     # in case the spacy model's noun chunks are wrong!
     if class_name == "":
+        if noun_token.text.isupper():
+            return noun_token.text
         return noun_token.lemma_.capitalize()
     return class_name
 
@@ -192,45 +199,116 @@ expletive = [
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": { "IN": ["attr", "npadvmod", "dobj"]}, "POS": {"IN": ["NOUN", "PROPN"]}},
+        "RIGHT_ATTRS": {
+            "DEP": {"IN": ["attr", "npadvmod", "dobj"]},
+            "POS": {"IN": ["NOUN", "PROPN"]},
+        },
     },
 ]
+
 
 def process_expletive(current_semantics: dict, build_in_progress: BuiltUML):
 
     # Get class
-    class_name = make_noun_pascal_case(current_semantics, build_in_progress, current_semantics["object"])
+    class_name = make_noun_pascal_case(
+        current_semantics, build_in_progress, current_semantics["object"]
+    )
 
     eclass = uml.UMLClass(class_name, "class")
     package = uml.UML(eclass.name)
     package.classes.append(eclass)
     return package
 
+
 # general compound noun: The drawing interface format.
 compound = [
     # Pattern is: (anything compound) (Proper Noun, can't be "class")
     # Extracted info: An empty class with the noun as the name.
-    {"RIGHT_ID": "noun", "RIGHT_ATTRS": {
-        "POS": {"IN": ["PROPN", "NOUN"]}, 
-        "LEMMA": {"NOT_IN": ["class", "Class"]},
-        "DEP": "ROOT"
-        # "DEP": {"NOT_IN": ["nsubj", "dobj", "compound", "pobj"]}
-        }
+    {
+        "RIGHT_ID": "noun",
+        "RIGHT_ATTRS": {
+            "POS": {"IN": ["PROPN", "NOUN"]},
+            "LEMMA": {"NOT_IN": ["class", "Class"]},
+            "DEP": "ROOT"
+            # "DEP": {"NOT_IN": ["nsubj", "dobj", "compound", "pobj"]}
+        },
     }
 ]
+
 
 def process_compound(current_semantics: dict, build: BuiltUML):
     # reject multi-sentences
     if len(list(build.spacy_doc.sents)) > 1:
         return None
 
-    noun_token = build.spacy_doc[current_semantics["positions"][current_semantics["noun"]]]
+    noun_token = build.spacy_doc[
+        current_semantics["positions"][current_semantics["noun"]]
+    ]
 
     class_name = make_noun_pascal_case(current_semantics, build, noun_token.lemma_)
     eclass = uml.UMLClass(class_name, "class")
     package = uml.UML(eclass.name)
     package.classes.append(eclass)
     return package
+
+
+# noun sentences with the class mention
+compound_class_explicit = [
+    # Pattern: (anything compound) class
+    # Extracted: Empty class with the name of the compound
+    {
+        "RIGHT_ID": "noun",
+        "RIGHT_ATTRS": {
+            "POS": {"IN": ["PROPN", "NOUN"]},
+            "LEMMA": {"IN": ["class", "Class"]},
+            "DEP": "ROOT",
+        },
+    },
+    {
+        "LEFT_ID": "noun",
+        "REL_OP": ">",
+        "RIGHT_ID": "complement",
+        "RIGHT_ATTRS": {"DEP": {"IN": ["amod", "compound"]}},
+    },
+]
+
+
+def process_compound_class_explicit(current_semantics: dict, build: BuiltUML):
+    # reject multi-sentences
+    if len(list(build.spacy_doc.sents)) > 1:
+        return None
+
+    noun_token = build.spacy_doc[
+        current_semantics["positions"][current_semantics["noun"]]
+    ]
+
+    chunks = list(build.spacy_doc.noun_chunks)
+
+    if len(chunks) > 1:
+        return None
+    chunk = chunks[0]
+    if chunk.root != noun_token:
+        return None
+
+    class_name = ""
+    for word in chunk:
+        if word.is_stop:
+            continue
+        if word == noun_token:  # the "class" word
+            continue
+        if word.text.isupper():  # an acronym
+            class_name += word.text
+        else:
+            class_name += word.lemma_.capitalize()
+
+    if class_name == "":
+        return None
+
+    eclass = uml.UMLClass(class_name, "class")
+    package = uml.UML(eclass.name)
+    package.classes.append(eclass)
+    return package
+
 
 # ----------------------------------------------
 
@@ -264,8 +342,8 @@ to_have_multiplicity = [
         "LEFT_ID": "number",
         "REL_OP": ">",
         "RIGHT_ID": "adverb",
-        "RIGHT_ATTRS": {"DEP": "advmod"}
-    }
+        "RIGHT_ATTRS": {"DEP": "advmod"},
+    },
 ]
 
 # Multiplicity pattern
@@ -289,16 +367,21 @@ multiplicity_conversion = {
 def process_relationship_pattern(current_semantics: dict, build_in_progress: BuiltUML):
 
     # Get classes
-    source_class_name = make_noun_pascal_case(current_semantics, build_in_progress, current_semantics["subject"])
+    source_class_name = make_noun_pascal_case(
+        current_semantics, build_in_progress, current_semantics["subject"]
+    )
     source = uml.UMLClass(source_class_name, "rel")
-    destination_class_name = make_noun_pascal_case(current_semantics, build_in_progress, current_semantics["object"])
+    destination_class_name = make_noun_pascal_case(
+        current_semantics, build_in_progress, current_semantics["object"]
+    )
     destination = uml.UMLClass(destination_class_name, "rel")
 
     # Get multiplicity
     matcher = PhraseMatcher(build_in_progress.nlp_model.vocab)
     # Only run nlp.make_doc to speed things up
     patterns = [
-        build_in_progress.nlp_model.make_doc(text) for text in multiplicity_conversion.keys()
+        build_in_progress.nlp_model.make_doc(text)
+        for text in multiplicity_conversion.keys()
     ]
     matcher.add("Multiplicities", patterns)
 
@@ -310,8 +393,14 @@ def process_relationship_pattern(current_semantics: dict, build_in_progress: Bui
         span = build_in_progress.spacy_doc[start:end]
 
         # This would trigger if there are many matches for the multiplicity term in the sentence
-        if not (start <= current_semantics["positions"][current_semantics["adverb"]] <= end):
-            print(build_in_progress.sentence, "This sentence has many multiplicities. Confusing.", file=stderr)
+        if not (
+            start <= current_semantics["positions"][current_semantics["adverb"]] <= end
+        ):
+            print(
+                build_in_progress.sentence,
+                "This sentence has many multiplicities. Confusing.",
+                file=stderr,
+            )
 
         found_multiplicity = span.text
 

@@ -137,6 +137,7 @@ if __name__ == "__main__":
   test_rule("class", "simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
   test_rule("class", "there is or exists", [nlp_patterns.expletive], nlp_patterns.process_expletive)
   test_rule("class", "compound", [nlp_patterns.compound], nlp_patterns.process_compound)
+  test_rule("class", "compound class explicit", [nlp_patterns.compound_class_explicit], nlp_patterns.process_compound_class_explicit)
   test_rule("rel", "to have with multiplicity", [nlp_patterns.to_have_multiplicity], nlp_patterns.process_relationship_pattern)
   print()
   print("DETAILS")
