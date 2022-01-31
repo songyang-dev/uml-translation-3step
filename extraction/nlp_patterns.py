@@ -137,6 +137,10 @@ copula_class = [
 
 # Process a copula match
 def process_copula_class(current_semantics: dict, build_in_progress: BuiltUML):
+    """
+    current_semantics is a dictionary where the keys are the left-ids of the dep pattern
+    and the values are the word captured by the pattern
+    """
 
     subject : str = current_semantics["subject"]
 
@@ -172,11 +176,11 @@ def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, noun: 
     return class_name
 
 
-# expletive: There is ...
+# expletive: There is / exists ...
 expletive = [
-    # Pattern is: There is (noun for class).
+    # Pattern is: There is / exists (noun for class).
     # Extracted info: An empty class with the name of the noun
-    {"RIGHT_ID": "copula", "RIGHT_ATTRS": {"LEMMA": "be"}},
+    {"RIGHT_ID": "copula", "RIGHT_ATTRS": {"LEMMA": {"IN": ["be", "exist"]}}},
     {
         "LEFT_ID": "copula",
         "REL_OP": ">",
@@ -188,7 +192,7 @@ expletive = [
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "attr", "POS": {"IN": ["NOUN", "PROPN"]}},
+        "RIGHT_ATTRS": {"DEP": { "IN": ["attr", "npadvmod", "dobj"]}, "POS": {"IN": ["NOUN", "PROPN"]}},
     },
 ]
 

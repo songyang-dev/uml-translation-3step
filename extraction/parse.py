@@ -37,7 +37,7 @@ def handle_class(text, verbose=True):
 
 def add_class_rules(extractor):
     extractor.add_rule("simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
-    extractor.add_rule("there is", [nlp_patterns.expletive], nlp_patterns.process_expletive)
+    extractor.add_rule("there is or exists", [nlp_patterns.expletive], nlp_patterns.process_expletive)
     extractor.add_rule("compound", [nlp_patterns.compound], nlp_patterns.process_compound)
 
 def handle_rel(text, verbose=True):
