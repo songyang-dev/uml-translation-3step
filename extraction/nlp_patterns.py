@@ -316,11 +316,11 @@ def process_compound_class_explicit(current_semantics: dict, build: BuiltUML):
 # to have. This pattern catches too many false positives and loses information that can be
 # extracted by more detailed patterns.
 class_to_have = [
-    # Pattern: (subject) has (object)
+    # Pattern: (subject) has/contains (object)
     # Extracted info: Class with one untyped attribute
     {
         "RIGHT_ID": "have",
-        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": "have"}
+        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": {"IN": ["have", "contain"]}}
     },
     {
         "LEFT_ID": "have",
@@ -379,8 +379,7 @@ def make_noun_camel_case(current_semantics: dict, build: BuiltUML, noun: str):
             continue
         class_name += token.capitalize()
 
-    return class_name
-
+    return class_name   
 
 # ----------------------------------------------
 
