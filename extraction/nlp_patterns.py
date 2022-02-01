@@ -74,6 +74,9 @@ class BuiltUML:
                     return found_umls["compound"]
                 elif "compound class explicit" in found_umls:
                     return found_umls["compound class explicit"]
+                elif "to have" in found_umls:
+                    return found_umls["to have"]
+                    
 
             elif self.kind == "rel":
 
@@ -310,10 +313,79 @@ def process_compound_class_explicit(current_semantics: dict, build: BuiltUML):
     return package
 
 
+# to have. This pattern catches too many false positives and loses information that can be
+# extracted by more detailed patterns.
+class_to_have = [
+    # Pattern: (subject) has (object)
+    # Extracted info: Class with one untyped attribute
+    {
+        "RIGHT_ID": "have",
+        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": "have"}
+    },
+    {
+        "LEFT_ID": "have",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubj"}
+    },
+    {
+        "LEFT_ID": "have",
+        "REL_OP": ">",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"DEP": "dobj"}
+    }
+]
+
+def process_class_to_have(current_semantics: dict, build: BuiltUML):
+    class_name = make_noun_pascal_case(current_semantics, build, current_semantics["subject"])
+    attribute_name = make_noun_camel_case(current_semantics, build, current_semantics["object"])
+
+    eclass = uml.UMLClass(class_name, "class")
+    eclass.attribute(attribute_name, attribute_type=None)
+    package = uml.UML(eclass.name)
+    package.classes.append(eclass)
+    return package
+
+def make_noun_camel_case(current_semantics: dict, build: BuiltUML, noun: str):
+    class_name = ""
+
+    noun_token = build.spacy_doc[current_semantics["positions"][noun]]
+
+    tokens : list[str] = []
+
+    for chunk in build.spacy_doc.noun_chunks:
+        if noun_token != chunk.root:
+            continue
+
+        for word in chunk:
+
+            if word.is_stop:
+                continue
+
+            if word.is_upper: # acronym
+                tokens.append(word.text)
+            else:
+                tokens.append(word.lemma_)
+        
+    if len(tokens) == 0:
+        if noun_token.is_upper:
+            return noun_token.text
+        else:
+            return noun
+
+    for i, token in enumerate(tokens):
+        if i == 0:
+            class_name += token
+            continue
+        class_name += token.capitalize()
+
+    return class_name
+
+
 # ----------------------------------------------
 
 # Relationship pattern
-to_have_multiplicity = [
+rel_to_have_multiplicity = [
     # Pattern is: A (noun for class A) has (numerical multiplicity) (noun for class B)
     # Extracted info: Class A has a relationship of a certain multiplicity with Class B
     # Procedure:
@@ -364,7 +436,7 @@ multiplicity_conversion = {
 }
 
 
-def process_relationship_pattern(current_semantics: dict, build_in_progress: BuiltUML):
+def process_rel_to_have_multiplicity(current_semantics: dict, build_in_progress: BuiltUML):
 
     # Get classes
     source_class_name = make_noun_pascal_case(

@@ -17,7 +17,7 @@ class UMLClass:
         self.associations : List[Tuple["UMLClass", str, str]] = []
         self.kind = kind
 
-    def attribute(self, name: str, attribute_type: str):
+    def attribute(self, name: str, attribute_type: str | None):
         self.attributes.append((name, attribute_type))
         return self
 
@@ -66,7 +66,14 @@ class UMLClass:
     def _class_to_plantuml(self, file_object):
         print("{", file=file_object)
         for attribute in self.attributes:
-            print(f"{attribute[0]} : {attribute[1]}", file=file_object)
+
+            attribute_name = attribute[0]
+            attribute_type = attribute[1]
+
+            if attribute_type == None:
+                print(f"{attribute_name}", file=file_object)
+            else:
+                print(f"{attribute_name} : {attribute_type}", file=file_object)
         print("}", file=file_object)
 
     def __str__(self) -> str:

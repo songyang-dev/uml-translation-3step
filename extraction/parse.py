@@ -35,11 +35,12 @@ def handle_class(text, verbose=True):
     PACKAGE = extractor.parse(verbose=verbose)
     return PACKAGE
 
-def add_class_rules(extractor):
+def add_class_rules(extractor: nlp_patterns.BuiltUML):
     extractor.add_rule("simple copula", [nlp_patterns.copula_class], nlp_patterns.process_copula_class)
     extractor.add_rule("there is or exists", [nlp_patterns.expletive], nlp_patterns.process_expletive)
     extractor.add_rule("compound", [nlp_patterns.compound], nlp_patterns.process_compound)
     extractor.add_rule("compound class explicit", [nlp_patterns.compound_class_explicit], nlp_patterns.process_compound_class_explicit)
+    extractor.add_rule("to have", [nlp_patterns.class_to_have], nlp_patterns.process_class_to_have)
 
 def handle_rel(text, verbose=True):
     extractor = nlp_patterns.BuiltUML(text, "rel")
@@ -50,7 +51,7 @@ def handle_rel(text, verbose=True):
     return PACKAGE
 
 def add_rel_rules(extractor):
-    extractor.add_rule("to have multiplicity", [nlp_patterns.to_have_multiplicity], nlp_patterns.process_relationship_pattern)
+    extractor.add_rule("to have multiplicity", [nlp_patterns.rel_to_have_multiplicity], nlp_patterns.process_rel_to_have_multiplicity)
 
 if __name__ == "__main__":
 
