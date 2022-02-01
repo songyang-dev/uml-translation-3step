@@ -233,7 +233,6 @@ compound = [
             "POS": {"IN": ["PROPN", "NOUN"]},
             "LEMMA": {"NOT_IN": ["class", "Class"]},
             "DEP": "ROOT"
-            # "DEP": {"NOT_IN": ["nsubj", "dobj", "compound", "pobj"]}
         },
     }
 ]
@@ -316,11 +315,11 @@ def process_compound_class_explicit(current_semantics: dict, build: BuiltUML):
 # to have. This pattern catches too many false positives and loses information that can be
 # extracted by more detailed patterns.
 class_to_have = [
-    # Pattern: (subject) has/contains (object)
+    # Pattern: (subject) has/contains/includes/comprise (object)
     # Extracted info: Class with one untyped attribute
     {
         "RIGHT_ID": "have",
-        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": {"IN": ["have", "contain"]}}
+        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": {"IN": ["have", "contain", "include", "comprise"]}}
     },
     {
         "LEFT_ID": "have",
