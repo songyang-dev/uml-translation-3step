@@ -47,6 +47,9 @@ class BuiltUML:
         if verbose:
             # Number of matches
             print(f"Matches: {len(matched_results)}")
+            for match_id, _ in matched_results:
+                string_id = self.nlp_model.vocab.strings[match_id]  # Get string representation
+                print(string_id)
 
         return self.select_parsed_result()
 
@@ -70,12 +73,16 @@ class BuiltUML:
                     return found_umls["simple copula"]
                 elif "there is or exists" in found_umls:
                     return found_umls["expletive"]
+                
+                elif "to have" in found_umls:
+                    return found_umls["to have"]
+                elif "class named" in found_umls:
+                    return found_umls["class named"]
+
                 elif "compound" in found_umls:
                     return found_umls["compound"]
                 elif "compound class explicit" in found_umls:
                     return found_umls["compound class explicit"]
-                elif "to have" in found_umls:
-                    return found_umls["to have"]
                     
 
             elif self.kind == "rel":
@@ -379,6 +386,37 @@ def make_noun_camel_case(current_semantics: dict, build: BuiltUML, noun: str):
         class_name += token.capitalize()
 
     return class_name   
+
+
+# class named
+class_named = [
+    # Pattern: A class named (object of a participle)
+    # Extracted info: Empty class object as the name
+    {
+        "RIGHT_ID": "class",
+        "RIGHT_ATTRS": {"LEMMA": {"IN" : ["class", "Class"]}, "DEP": "ROOT"}
+    },
+    {
+        "LEFT_ID": "class",
+        "REL_OP": ">",
+        "RIGHT_ID": "named",
+        "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": "name"}
+    },
+    {
+        "LEFT_ID": "named",
+        "REL_OP": ">",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"DEP": "oprd"}
+    }
+]
+
+def process_class_named(semantics: dict, build: BuiltUML):
+    class_name = make_noun_pascal_case(semantics, build, semantics["object"])
+
+    eclass = uml.UMLClass(class_name, "class")
+    package = uml.UML(eclass)
+    package.classes.append(eclass)
+    return package
 
 # ----------------------------------------------
 

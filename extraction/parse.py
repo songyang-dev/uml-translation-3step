@@ -24,7 +24,7 @@ if __name__ == "__main__":
     out_path = sys.argv[2]
 
     # Receives text to parse through stdin
-    # text = "The red apple."
+    # text = "A class named Job."
     text = sys.stdin.read()
 
 def handle_class(text, verbose=True):
@@ -41,6 +41,7 @@ def add_class_rules(extractor: nlp_patterns.BuiltUML):
     extractor.add_rule("compound", [nlp_patterns.compound], nlp_patterns.process_compound)
     extractor.add_rule("compound class explicit", [nlp_patterns.compound_class_explicit], nlp_patterns.process_compound_class_explicit)
     extractor.add_rule("to have", [nlp_patterns.class_to_have], nlp_patterns.process_class_to_have)
+    extractor.add_rule("class named", [nlp_patterns.class_named], nlp_patterns.process_class_named)
 
 def handle_rel(text, verbose=True):
     extractor = nlp_patterns.BuiltUML(text, "rel")

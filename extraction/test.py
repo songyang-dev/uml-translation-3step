@@ -139,6 +139,7 @@ if __name__ == "__main__":
   test_rule("class", "compound", [nlp_patterns.compound], nlp_patterns.process_compound)
   test_rule("class", "compound class explicit", [nlp_patterns.compound_class_explicit], nlp_patterns.process_compound_class_explicit)
   test_rule("class", "to have", [nlp_patterns.class_to_have], nlp_patterns.process_class_to_have)
+  test_rule("class", "class named", [nlp_patterns.class_named], nlp_patterns.process_class_named)
   test_rule("rel", "to have with multiplicity", [nlp_patterns.rel_to_have_multiplicity], nlp_patterns.process_rel_to_have_multiplicity)
   print()
   print("DETAILS")
