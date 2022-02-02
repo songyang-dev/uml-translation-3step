@@ -42,6 +42,7 @@ def add_class_rules(extractor: nlp_patterns.BuiltUML):
     extractor.add_rule("compound class explicit", [nlp_patterns.compound_class_explicit], nlp_patterns.process_compound_class_explicit)
     extractor.add_rule("to have", [nlp_patterns.class_to_have], nlp_patterns.process_class_to_have)
     extractor.add_rule("class named", [nlp_patterns.class_named], nlp_patterns.process_class_named)
+    extractor.add_rule("component of package", [nlp_patterns.component_package], nlp_patterns.process_component_package)
 
 def handle_rel(text, verbose=True):
     extractor = nlp_patterns.BuiltUML(text, "rel")

@@ -83,6 +83,9 @@ class BuiltUML:
                     return found_umls["compound"]
                 elif "compound class explicit" in found_umls:
                     return found_umls["compound class explicit"]
+
+                elif "component of package" in found_umls:
+                    return found_umls["component of package"]
                     
 
             elif self.kind == "rel":
@@ -412,6 +415,43 @@ class_named = [
 
 def process_class_named(semantics: dict, build: BuiltUML):
     class_name = make_noun_pascal_case(semantics, build, semantics["object"])
+
+    eclass = uml.UMLClass(class_name, "class")
+    package = uml.UML(eclass)
+    package.classes.append(eclass)
+    return package
+
+
+# component of a package
+component_package = [
+    # Pattern: (subject) is a component of the package ...
+    # Extracted: Empty class of that name
+    {
+        "RIGHT_ID": "copula",
+        "RIGHT_ATTRS": {"LEMMA": "be", "DEP": "ROOT"}
+    },
+    {
+        "LEFT_ID": "copula",
+        "REL_OP": ">",
+        "RIGHT_ID": "component",
+        "RIGHT_ATTRS": {"DEP": "attr", "LEMMA": "component"}
+    },
+    {
+        "LEFT_ID": "component",
+        "REL_OP": ">>",
+        "RIGHT_ID": "package",
+        "RIGHT_ATTRS": {"LEMMA": "package"}
+    },
+    {
+        "LEFT_ID": "copula",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubj"}
+    }
+]
+
+def process_component_package(semantics: dict, build: BuiltUML):
+    class_name = make_noun_pascal_case(semantics, build, semantics["subject"])
 
     eclass = uml.UMLClass(class_name, "class")
     package = uml.UML(eclass)
