@@ -424,7 +424,7 @@ def process_class_named(semantics: dict, build: BuiltUML):
 
 # component of a package
 component_package = [
-    # Pattern: (subject) is a component of the package ...
+    # Pattern: (subject) is a component/part of the package ...
     # Extracted: Empty class of that name
     {
         "RIGHT_ID": "copula",
@@ -434,7 +434,7 @@ component_package = [
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "component",
-        "RIGHT_ATTRS": {"DEP": "attr", "LEMMA": "component"}
+        "RIGHT_ATTRS": {"DEP": "attr", "LEMMA": {"IN": ["component", "part"]}}
     },
     {
         "LEFT_ID": "component",
