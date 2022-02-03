@@ -55,6 +55,7 @@ def handle_rel(text, verbose=True):
 def add_rel_rules(extractor: nlp_patterns.BuiltUML):
     extractor.add_rule("to have multiplicity", [nlp_patterns.rel_to_have_multiplicity], nlp_patterns.process_rel_to_have_multiplicity)
     extractor.add_rule("passive voice", [nlp_patterns.passive_voice], nlp_patterns.process_passive_voice)
+    extractor.add_rule("to have", [nlp_patterns.rel_to_have], nlp_patterns.process_rel_to_have)
 
 if __name__ == "__main__":
 

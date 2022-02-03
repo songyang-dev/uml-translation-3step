@@ -93,6 +93,9 @@ class BuiltUML:
                 if "to have with multiplicity" in found_umls:
                     return found_umls["to have with multiplicity"]
 
+                elif "to have" in found_umls:
+                    return found_umls["to have"]
+
                 elif "passive voice" in found_umls:
                     return found_umls["passive voice"]
 
@@ -464,6 +467,43 @@ def process_component_package(semantics: dict, build: BuiltUML):
 # ----------------------------------------------
 
 # Relationship pattern
+
+# simple to have
+rel_to_have = [
+    # Pattern: (subject) has (object)
+    # Extracted: Two classes with an unnamed association from subject to object
+    {
+        "RIGHT_ID": "have",
+        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": "have"}
+    },
+    {
+        "LEFT_ID": "have",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubj"}
+    },
+    {
+        "LEFT_ID": "have",
+        "REL_OP": ">",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"DEP": "dobj"}
+    }
+]
+
+def process_rel_to_have(semantics: dict, build: BuiltUML):
+    source_class = make_noun_pascal_case(semantics, build, semantics["subject"])
+    dest_class = make_noun_pascal_case(semantics, build, semantics["object"])
+
+    source_eclass = uml.UMLClass(source_class, "class")
+    dest_eclass = uml.UMLClass(dest_class, "class")
+
+    source_eclass.association(dest_eclass, "", "")
+
+    package = uml.UML(source_eclass.name)
+    package.classes.extend([source_eclass, dest_eclass])
+    return package
+
+# to have with multiplicity check
 rel_to_have_multiplicity = [
     # Pattern is: A (noun for class A) has (numerical multiplicity) (noun for class B)
     # Extracted info: Class A has a relationship of a certain multiplicity with Class B

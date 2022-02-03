@@ -143,6 +143,7 @@ if __name__ == "__main__":
   test_rule("class", "component of package", [nlp_patterns.component_package], nlp_patterns.process_component_package)
   test_rule("rel", "to have with multiplicity", [nlp_patterns.rel_to_have_multiplicity], nlp_patterns.process_rel_to_have_multiplicity)
   test_rule("rel", "passive voice", [nlp_patterns.passive_voice], nlp_patterns.process_passive_voice)
+  test_rule("rel", "to have", [nlp_patterns.rel_to_have], nlp_patterns.process_rel_to_have)
   print()
   print("DETAILS")
   print("Individual cases are logged at the temp folder next to this script")
