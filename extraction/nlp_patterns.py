@@ -93,6 +93,9 @@ class BuiltUML:
                 if "to have with multiplicity" in found_umls:
                     return found_umls["to have with multiplicity"]
 
+                elif "passive voice" in found_umls:
+                    return found_umls["passive voice"]
+
         else:
             return None
 
@@ -565,3 +568,48 @@ def extract_multiplicity(current_semantics, build_in_progress):
 
         break
     return found_multiplicity
+
+
+# Passive voice
+passive_voice = [
+    # Pattern: (subject) is (verb in passive voice) by (object)
+    # Extracted: Two classes with a relationship of the verb between them.
+    # The relationship is the nominalization of the verb.
+    {
+        "RIGHT_ID": "verb",
+        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB"}
+    },
+    {
+        "LEFT_ID": "verb",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubjpass", "POS": {"IN": ["NOUN", "PROPN"]}} # simple passive voice
+    },
+    {
+        "LEFT_ID": "verb",
+        "REL_OP": ">",
+        "RIGHT_ID": "by",
+        "RIGHT_ATTRS": {"LEMMA": "by", "DEP": "agent"}
+    },
+    {
+        "LEFT_ID": "by",
+        "REL_OP": ">",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"DEP": "pobj", "POS": {"IN": ["NOUN", "PROPN"]}}
+    }
+]
+
+def process_passive_voice(semantics: dict, build: BuiltUML):
+    source_class = make_noun_pascal_case(semantics, build, semantics["subject"])
+    dest_class = make_noun_pascal_case(semantics, build, semantics["object"])
+
+    source_eclass = uml.UMLClass(source_class, "rel")
+    dest_eclass = uml.UMLClass(dest_class, "class")
+
+    association_name = semantics["verb"] # must change this from verb to noun
+
+    source_eclass.association(dest_eclass, "", association_name)
+
+    package = uml.UML(source_eclass.name)
+    package.classes.extend([source_eclass, dest_eclass])
+    return package
