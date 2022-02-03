@@ -524,6 +524,17 @@ def process_rel_to_have_multiplicity(current_semantics: dict, build_in_progress:
     )
     destination = uml.UMLClass(destination_class_name, "rel")
 
+    found_multiplicity = extract_multiplicity(current_semantics, build_in_progress)
+
+    # Build UML
+
+    source.association(destination, multiplicity_conversion[found_multiplicity])
+
+    package = uml.UML(source.name)
+    package.classes.extend([source, destination])
+    return package
+
+def extract_multiplicity(current_semantics, build_in_progress):
     # Get multiplicity
     matcher = PhraseMatcher(build_in_progress.nlp_model.vocab)
     # Only run nlp.make_doc to speed things up
@@ -553,11 +564,4 @@ def process_rel_to_have_multiplicity(current_semantics: dict, build_in_progress:
         found_multiplicity = span.text
 
         break
-
-    # Build UML
-
-    source.association(destination, multiplicity_conversion[found_multiplicity])
-
-    package = uml.UML(source.name)
-    package.classes.extend([source, destination])
-    return package
+    return found_multiplicity
