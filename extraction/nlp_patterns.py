@@ -102,6 +102,9 @@ class BuiltUML:
                 elif "passive voice" in found_umls:
                     return found_umls["passive voice"]
 
+                elif "active voice" in found_umls:
+                    return found_umls["active voice"]
+
                 
         else:
             return None
@@ -498,8 +501,8 @@ def process_rel_to_have(semantics: dict, build: BuiltUML):
     source_class = make_noun_pascal_case(semantics, build, semantics["subject"])
     dest_class = make_noun_pascal_case(semantics, build, semantics["object"])
 
-    source_eclass = uml.UMLClass(source_class, "class")
-    dest_eclass = uml.UMLClass(dest_class, "class")
+    source_eclass = uml.UMLClass(source_class, "rel")
+    dest_eclass = uml.UMLClass(dest_class, "rel")
 
     source_eclass.association(dest_eclass, "", "")
 
@@ -642,7 +645,7 @@ def process_passive_voice(semantics: dict, build: BuiltUML):
     dest_class = make_noun_pascal_case(semantics, build, semantics["object"])
 
     source_eclass = uml.UMLClass(source_class, "rel")
-    dest_eclass = uml.UMLClass(dest_class, "class")
+    dest_eclass = uml.UMLClass(dest_class, "rel")
 
     association_name = semantics["verb"] # must change this from verb to noun
 
@@ -680,9 +683,47 @@ def process_composed(semantics: dict, build: BuiltUML):
     dest_name = make_noun_pascal_case(semantics, build, semantics["object"])
 
     source_eclass = uml.UMLClass(source_name, "rel")
-    dest_eclass = uml.UMLClass(dest_name, "class")
+    dest_eclass = uml.UMLClass(dest_name, "rel")
 
     source_eclass.association(dest_eclass, "", "")
+
+    package = uml.UML(source_eclass.name)
+    package.classes.extend([source_eclass, dest_eclass])
+    return package
+
+
+# Active voice
+active_voice = [
+    # Pattern: (subject) (verb in active voice, except some) (object)
+    # Extracted: Two classes with a named relation
+    {
+        "RIGHT_ID": "verb",
+        "RIGHT_ATTRS": {"LEMMA": {"NOT_IN": ["be", "exist"]}, "DEP": "ROOT"}
+    },
+    {
+        "LEFT_ID": "verb",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubj"}
+    },
+    {
+        "LEFT_ID": "verb",
+        "REL_OP": ">",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"DEP": "dobj"}
+    }
+]
+
+def process_active_voice(semantics: dict, build: BuiltUML):
+    source_name = make_noun_pascal_case(semantics, build, semantics["subject"])
+    dest_name = make_noun_pascal_case(semantics, build, semantics["object"])
+
+    rel_name = semantics["verb"]
+
+    source_eclass = uml.UMLClass(source_name, "rel")
+    dest_eclass = uml.UMLClass(dest_name, "rel")
+
+    source_eclass.association(dest_eclass, multiplicity="", name=rel_name)
 
     package = uml.UML(source_eclass.name)
     package.classes.extend([source_eclass, dest_eclass])
