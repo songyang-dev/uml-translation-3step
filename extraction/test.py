@@ -144,6 +144,7 @@ if __name__ == "__main__":
   test_rule("rel", "to have with multiplicity", [nlp_patterns.rel_to_have_multiplicity], nlp_patterns.process_rel_to_have_multiplicity)
   test_rule("rel", "passive voice", [nlp_patterns.passive_voice], nlp_patterns.process_passive_voice)
   test_rule("rel", "to have", [nlp_patterns.rel_to_have], nlp_patterns.process_rel_to_have)
+  test_rule("rel", "composed", [nlp_patterns.composed], nlp_patterns.process_composed)
   print()
   print("DETAILS")
   print("Individual cases are logged at the temp folder next to this script")

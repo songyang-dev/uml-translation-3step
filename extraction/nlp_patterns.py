@@ -96,9 +96,13 @@ class BuiltUML:
                 elif "to have" in found_umls:
                     return found_umls["to have"]
 
+                elif "composed" in found_umls: # this might be changed to gain priority
+                    return found_umls["composed"]
+
                 elif "passive voice" in found_umls:
                     return found_umls["passive voice"]
 
+                
         else:
             return None
 
@@ -474,7 +478,7 @@ rel_to_have = [
     # Extracted: Two classes with an unnamed association from subject to object
     {
         "RIGHT_ID": "have",
-        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": "have"}
+        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": {"IN": ["have", "contain"]}}
     },
     {
         "LEFT_ID": "have",
@@ -627,13 +631,7 @@ passive_voice = [
     },
     {
         "LEFT_ID": "verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "by",
-        "RIGHT_ATTRS": {"LEMMA": "by", "DEP": "agent"}
-    },
-    {
-        "LEFT_ID": "by",
-        "REL_OP": ">",
+        "REL_OP": ">>",
         "RIGHT_ID": "object",
         "RIGHT_ATTRS": {"DEP": "pobj", "POS": {"IN": ["NOUN", "PROPN"]}}
     }
@@ -649,6 +647,42 @@ def process_passive_voice(semantics: dict, build: BuiltUML):
     association_name = semantics["verb"] # must change this from verb to noun
 
     source_eclass.association(dest_eclass, "", association_name)
+
+    package = uml.UML(source_eclass.name)
+    package.classes.extend([source_eclass, dest_eclass])
+    return package
+
+
+# Composition
+composed = [
+    # Pattern: (subject) is composed/associated ... (object)
+    # Extracted: Two classes with a relation from subject to object
+    {
+        "RIGHT_ID": "composed",
+        "RIGHT_ATTRS": {"LEMMA": {"IN": ["compose", "associate"]}, "DEP": "ROOT"}
+    },
+    {
+        "LEFT_ID": "composed",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubjpass"}
+    },
+    {
+        "LEFT_ID": "composed",
+        "REL_OP": ">>",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"POS": { "IN": ["PROPN", "NOUN"]}}
+    }
+]
+
+def process_composed(semantics: dict, build: BuiltUML):
+    source_name = make_noun_pascal_case(semantics, build, semantics["subject"])
+    dest_name = make_noun_pascal_case(semantics, build, semantics["object"])
+
+    source_eclass = uml.UMLClass(source_name, "rel")
+    dest_eclass = uml.UMLClass(dest_name, "class")
+
+    source_eclass.association(dest_eclass, "", "")
 
     package = uml.UML(source_eclass.name)
     package.classes.extend([source_eclass, dest_eclass])
