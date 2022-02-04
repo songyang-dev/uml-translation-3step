@@ -58,6 +58,7 @@ def add_rel_rules(extractor: nlp_patterns.BuiltUML):
     extractor.add_rule("to have", [nlp_patterns.rel_to_have], nlp_patterns.process_rel_to_have)
     extractor.add_rule("composed", [nlp_patterns.composed], nlp_patterns.process_composed)
     extractor.add_rule("active voice", [nlp_patterns.active_voice], nlp_patterns.process_active_voice)
+    extractor.add_rule("active voice preposition", [nlp_patterns.active_voice_preposition], nlp_patterns.process_active_voice_preposition)
 
 if __name__ == "__main__":
 

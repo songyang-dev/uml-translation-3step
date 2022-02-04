@@ -728,3 +728,30 @@ def process_active_voice(semantics: dict, build: BuiltUML):
     package = uml.UML(source_eclass.name)
     package.classes.extend([source_eclass, dest_eclass])
     return package
+
+
+# Active voice with prepositional verbs
+active_voice_preposition = [
+    # Pattern: (subject) (prepositional verb in active voice, except some) (object)
+    # Extracted: Two classes with a named relation
+    {
+        "RIGHT_ID": "verb",
+        "RIGHT_ATTRS": {"DEP": "ROOT", "LEMMA": {"NOT_IN": ["be", "exist"]}}
+    },
+    {
+        "LEFT_ID": "verb",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubj"}
+    },
+    {
+        "LEFT_ID": "verb",
+        "REL_OP": ">>",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"DEP": "pobj"}
+    }
+]
+
+def process_active_voice_preposition(semantics: dict, build: BuiltUML):
+    return process_active_voice(semantics, build)
+    
