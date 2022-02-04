@@ -754,4 +754,39 @@ active_voice_preposition = [
 
 def process_active_voice_preposition(semantics: dict, build: BuiltUML):
     return process_active_voice(semantics, build)
+
+# Simple with
+noun_with = [
+    # Pattern: (noun) with (noun)
+    # Extracted: Two classes with a relation
+    {
+        "RIGHT_ID": "noun",
+        "RIGHT_ATTRS": {"POS": {"IN": ["PROPN", "NOUN"]}, "DEP": "ROOT"}
+    },
+    {
+        "LEFT_ID": "noun",
+        "REL_OP": ">",
+        "RIGHT_ID": "with",
+        "RIGHT_ATTRS": {"POS": "ADP", "DEP": "prep", "LEMMA": "with"}
+    },
+    {
+        "LEFT_ID": "with",
+        "REL_OP": ">",
+        "RIGHT_ID": "object",
+        "RIGHT_ATTRS": {"POS": {"IN": ["PROPN", "NOUN"]}, "DEP": "pobj"}
+    }
+]
+
+def process_noun_with(semantics: dict, build: BuiltUML):
+    source_name = make_noun_pascal_case(semantics, build, semantics["noun"])
+    dest_name = make_noun_pascal_case(semantics, build, semantics["object"])
+
+    source_eclass = uml.UMLClass(source_name, "rel")
+    dest_eclass = uml.UMLClass(dest_name, "rel")
+
+    source_eclass.association(dest_eclass, multiplicity="", name="")
+
+    package = uml.UML(source_eclass.name)
+    package.classes.extend([source_eclass, dest_eclass])
+    return package
     

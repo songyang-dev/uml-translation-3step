@@ -147,6 +147,7 @@ if __name__ == "__main__":
   test_rule("rel", "composed", [nlp_patterns.composed], nlp_patterns.process_composed)
   test_rule("rel", "active voice", [nlp_patterns.active_voice], nlp_patterns.process_active_voice)
   test_rule("rel", "active voice preposition", [nlp_patterns.active_voice_preposition], nlp_patterns.process_active_voice_preposition)
+  test_rule("rel", "noun with", [nlp_patterns.noun_with], nlp_patterns.process_noun_with)
   print()
   print("DETAILS")
   print("Individual cases are logged at the temp folder next to this script")
