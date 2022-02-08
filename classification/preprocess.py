@@ -24,6 +24,7 @@ def preprocess(source_dir: str, destination_dir: str):
     labels = pd.read_csv(os.path.join(source_dir, "labels.csv"))
     fragments = pd.read_csv(os.path.join(source_dir, "fragments.csv"))
 
+    paired_index = []
     paired_labels = []
     paired_kind = []
     
@@ -33,6 +34,8 @@ def preprocess(source_dir: str, destination_dir: str):
 
     # iterate through labels
     for index, label in labels.iterrows():
+        paired_index.append(label["id"])
+
         tokenize = label["label"]
 
         paired_labels.append(tokenize)
@@ -45,7 +48,7 @@ def preprocess(source_dir: str, destination_dir: str):
         paired_kind.append(kind)
     
     # output
-    paired = pd.DataFrame(data={'english': paired_labels, 'kind':paired_kind})
+    paired = pd.DataFrame(data={'english': paired_labels, 'kind':paired_kind}, index=paired_index)
     paired.to_csv(os.path.join(destination_dir, "fragment_kinds.csv"))
 
 preprocess(sys.argv[1], sys.argv[2])
