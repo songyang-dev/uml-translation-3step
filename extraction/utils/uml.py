@@ -79,14 +79,32 @@ class UMLClass:
     def __str__(self) -> str:
         return self.name
 
+    def __eq__(self, __o: "UMLClass") -> bool:
+        if type(__o) != UMLClass:
+            return False
+
+        if self.name != __o.name:
+            return False
+
+        if self.kind != __o.kind:
+            return False
+        
+        if self.kind == "class":
+            for attr1, attr2 in zip(self.attributes, __o.attributes):
+                if attr1 != attr2:
+                    return False
+            return True
+        else:
+            for rel1, rel2 in zip(self.associations, __o.associations):
+                if rel1 != rel2:
+                    return False
+            return True
+        
+
 class UML:
     def __init__(self, package_name: str) -> None:
         self.package_name = package_name
         self.classes : List[UMLClass] = []
-    
-    def umlclass(self, umlclass: UMLClass):
-        self.classes.append(umlclass)
-        return self
 
     def save(self, path: str):
         
@@ -105,3 +123,17 @@ class UML:
         for c in self.classes:
             c._to_plantuml(file_object=file_object)
         print("@enduml", file=file_object)
+
+    def __eq__(self, __o: "UML") -> bool:
+        if type(__o) != UML:
+            return False
+
+        # equality when classes are identical
+        if len(self.classes) != len(__o.classes):
+            return False
+
+        for eclass1, eclass2 in zip(self.classes, __o.classes):
+            if eclass1 != eclass2:
+                return False
+
+        return True

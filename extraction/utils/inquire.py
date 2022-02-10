@@ -9,7 +9,7 @@ import pandas
 from pyecore.resources import ResourceSet
 from pyecore.utils import dispatch
 import pyecore.ecore as ecore
-import uml
+from . import uml
 
 if __name__ == "__main__":
     if len(argv) != 2:
@@ -121,7 +121,13 @@ def get_uml_fragment(label_id: int):
     switch = PlantUMLSwitch()
     switch.generate(root)
     switch.completion()
-    package = switch.result
+    
+    if fragment["kind"].values[0] == "class":
+        switch.result.classes[0].kind = "class"
+    
+    if switch.result is None:
+        raise Exception("No original fragment!!")
+    return switch.result
 
 
 if __name__ == "__main__":
