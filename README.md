@@ -8,6 +8,10 @@ To run this repo, you need Python 3 and several Python modules. All can be insta
 * scikit-learn
 * spacy, then download its small English model
 * pyecore
+* termcolor
+
+The overall environment must be from `conda` including the Python interpreter. Anaconda-specific modules are.
+* pytorch, with GPU support
 
 In addition, a UML visualization tool is required. Built in Java.
 * plantuml, for visualization

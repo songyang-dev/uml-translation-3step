@@ -9,15 +9,18 @@ import pandas
 from pyecore.resources import ResourceSet
 from pyecore.utils import dispatch
 import pyecore.ecore as ecore
-from . import uml
+
 
 if __name__ == "__main__":
-    if len(argv) != 2:
-        print("Usage: py inquire.py dir_where_the_data_is")
+    import uml
+    if len(argv) != 3:
+        print("Usage: py inquire.py dir_where_the_data_is label_id")
         exit(1)
     source_dir = argv[1]
+    label_id = argv[2]
 
 else:
+    from . import uml
     source_dir = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\cleaning\\"
 
 fragments_csv = os.path.join(source_dir, "fragments.csv")
@@ -28,6 +31,7 @@ FRAGMENTS = pandas.read_csv(fragments_csv)
 LABELS = pandas.read_csv(labels_csv)
 MODELS = pandas.read_csv(models_csv)
 
+CURRENT_FRAGMENT = None
 
 class PlantUMLSwitch(object):
     def __init__(self):
@@ -106,11 +110,15 @@ def get_uml_fragment(label_id: int):
 
     fragment = FRAGMENTS.loc[FRAGMENTS["unique_id"] == fragment_id]
 
+    global CURRENT_FRAGMENT
+
     fragment_name = "{}_{}{}.ecore".format(
         fragment["model"].values[0],
         fragment["kind"].values[0],
         fragment["number"].values[0],
     )
+
+    CURRENT_FRAGMENT = fragment_name
 
     # UML Ecore
     rset = ResourceSet()
@@ -132,4 +140,5 @@ def get_uml_fragment(label_id: int):
 
 if __name__ == "__main__":
 
-    get_uml_fragment(355)
+    get_uml_fragment(int(label_id))
+    print(CURRENT_FRAGMENT)
