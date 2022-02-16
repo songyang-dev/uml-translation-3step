@@ -12,12 +12,10 @@ To run this repo, you need Python 3 and several Python modules. All can be insta
 - spacy, then download its small English model
 - pyecore
 - termcolor
-- stanza, and then install the CoreNLP server
 - coreferee, and then install the English model
+  - This will also install Tensorflow and keras.
 
-The overall environment must be from `conda` including the Python interpreter. Anaconda-specific modules are.
-
-- pytorch, with GPU support
+Anaconda or the mini version is recommended.
 
 In addition, a UML visualization tool is required. Built in Java.
 

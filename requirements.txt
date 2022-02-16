@@ -4,5 +4,4 @@ scikit-learn
 pandas
 pyecore
 termcolor
-stanza
 coreferee

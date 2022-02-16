@@ -6,62 +6,29 @@ The sentences then have all coreferences resolved.
 """
 
 from sys import argv
-from stanza.server import CoreNLPClient
+import spacy, coreferee
 
-CLIENT: CoreNLPClient
+if __name__ == "__main__":
+    # if len(argv) != 3:
+    #     print("Usage: py preprocess.py classified-data new-data")
+    #     exit(1)
+    pass
 
-
-def preprocess_start():
-    """
-    Starts the CoreNLP client. It takes several seconds and requires prior installation.
-    """
-    global CLIENT
-    CLIENT = CoreNLPClient(annotators=["coref"], be_quiet=True)
-    CLIENT.start()
+nlp = spacy.load("en_core_web_sm")
+nlp.add_pipe("coreferee")
 
 
 def preprocess(text: str):
     """
     Requests the CoreNLP server. It needs to have been started.
     """
-    global CLIENT
-    if CLIENT is None:
-        raise Exception(
-            "Call preprocess_start() first. And finish with preprocess_stop()"
-        )
-
-    return CLIENT.annotate(text)
-
-
-def preprocess_stop():
-    """
-    Stops the running CoreNLP server.
-    """
-    global CLIENT
-    if CLIENT is None:
-        raise Exception("No client started")
-    CLIENT.stop()
-
-
-def preprocess_once(text: str):
-    """
-    Separate the given text into many sentences and resolve coreferences
-    """
-    client = CoreNLPClient(annotators=["coref"], be_quiet=True)
-    client.start()
-    ann = client.annotate(text)
-    client.stop()
-    return ann
+    return nlp(text)
 
 
 if __name__ == "__main__":
-    # if len(argv) != 3:
-    #   print("Usage: py preprocess.py classified-data new-data")
-    #   exit(1)
-    # text = "Chris Manning is a nice person. Chris wrote a simple sentence. He also gives oranges to people."
 
-    text = "Chris Manning is a nice person. Chris wrote a simple sentence. He also gives oranges to people."
+    text = "Although he was very busy with his work, Peter had had enough of it. He and his wife decided they needed a holiday. They travelled to Spain because they loved the country very much."
 
-    result = preprocess_once(text)
+    result = preprocess(text)
 
     print(result)
