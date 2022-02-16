@@ -6,7 +6,9 @@ The sentences then have all coreferences resolved.
 """
 
 from sys import argv
-import spacy, coreferee
+
+# import spacy, coreferee
+import spacy
 
 if __name__ == "__main__":
     # if len(argv) != 3:
@@ -15,14 +17,16 @@ if __name__ == "__main__":
     pass
 
 nlp = spacy.load("en_core_web_sm")
-nlp.add_pipe("coreferee")
+# nlp.add_pipe("coreferee")
 
 
 def preprocess(text: str):
     """
-    Requests the CoreNLP server. It needs to have been started.
+    Substitute all the coreferences. Then split the sentences.
     """
-    return nlp(text)
+    doc = nlp(text)
+    for s in doc.sents:
+        print(s)
 
 
 if __name__ == "__main__":

@@ -10,14 +10,13 @@ from typing import List, Tuple
 
 
 class UMLClass:
-
     def __init__(self, name: str, kind: str) -> None:
         self.name = name
-        self.attributes : List[Tuple[str, str]] = []
-        self.associations : List[Tuple["UMLClass", str, str]] = []
+        self.attributes: List[Tuple[str, str]] = []
+        self.associations: List[Tuple["UMLClass", str, str]] = []
         self.kind = kind
 
-    def attribute(self, name: str, attribute_type: str | None):
+    def attribute(self, name: str, attribute_type: str):
         self.attributes.append((name, attribute_type))
         return self
 
@@ -32,13 +31,13 @@ class UMLClass:
 
     def _to_plantuml(self, file_object: TextIOWrapper):
         print(f"class {self.name}", file=file_object)
-        
+
         if self.kind == "class":
             self._class_to_plantuml(file_object)
 
         elif self.kind == "association":
             self._associations_to_plantuml(file_object)
-        
+
         else:
             self._class_to_plantuml(file_object)
             self._associations_to_plantuml(file_object)
@@ -48,19 +47,19 @@ class UMLClass:
             destination, multiplicity, name = association
 
             if multiplicity == "1..1":
-                association = f"{self.name} \"1\" --> \"1\" {destination}"
+                association = f'{self.name} "1" --> "1" {destination}'
             elif multiplicity == "0..1":
-                association = f"{self.name} \"0\" --> \"1\" {destination}"
+                association = f'{self.name} "0" --> "1" {destination}'
             elif multiplicity == "0..*":
-                association = f"{self.name} \"0\" --> \"*\" {destination}"
+                association = f'{self.name} "0" --> "*" {destination}'
             elif multiplicity == "1..*":
-                association = f"{self.name} \"1\" --> \"*\" {destination}"
+                association = f'{self.name} "1" --> "*" {destination}'
             else:
                 association = f"{self.name} --> {destination}"
-                
+
             if name != "":
                 association += f" : {name}"
-                
+
             print(association, file=file_object)
 
     def _class_to_plantuml(self, file_object):
@@ -88,7 +87,7 @@ class UMLClass:
 
         if self.kind != __o.kind:
             return False
-        
+
         if self.kind == "class":
             for attr1, attr2 in zip(self.attributes, __o.attributes):
                 if attr1 != attr2:
@@ -99,15 +98,15 @@ class UMLClass:
                 if rel1 != rel2:
                     return False
             return True
-        
+
 
 class UML:
     def __init__(self, package_name: str) -> None:
         self.package_name = package_name
-        self.classes : List[UMLClass] = []
+        self.classes: List[UMLClass] = []
 
     def save(self, path: str):
-        
+
         os.makedirs(os.path.dirname(path), exist_ok=True)
         file_object = open(path, "w")
         self._to_plantuml(file_object)
@@ -117,7 +116,7 @@ class UML:
 
     # https://plantuml.com/class-diagram
     def _to_plantuml(self, file_object):
-        
+
         print("@startuml", file=file_object)
         print("!theme plain", file=file_object)
         for c in self.classes:
