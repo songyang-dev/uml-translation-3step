@@ -60,6 +60,8 @@ if __name__ == "__main__":
     #   exit(1)
     # text = "Chris Manning is a nice person. Chris wrote a simple sentence. He also gives oranges to people."
 
-    text = "I have a friend named George. He is my best friend. I like him."
+    text = "Chris Manning is a nice person. Chris wrote a simple sentence. He also gives oranges to people."
 
-    preprocess_once(text)
+    result = preprocess_once(text)
+
+    print(result)
