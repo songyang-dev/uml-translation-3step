@@ -5,3 +5,4 @@ pandas
 pyecore
 termcolor
 coreferee
+tensorflow
