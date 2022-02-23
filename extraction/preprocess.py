@@ -5,23 +5,26 @@ Labels whose text is more than one sentence are separated into individual senten
 The sentences then have all coreferences resolved.
 """
 
-from sys import argv
-
-import spacy, coreferee.data_model
-
-# import spacy
+import sys
+import os
 
 if __name__ == "__main__":
-    # if len(argv) != 3:
-    #     print("Usage: py preprocess.py classified-data new-data")
-    #     exit(1)
-    pass
+    if len(sys.argv) != 3:
+        print("Usage: py preprocess.py classified-data new-data")
+        exit(1)
+    CLASSIFIED = os.path.join(os.getcwd(), sys.argv[1])
+    OUTPUT = os.path.join(os.getcwd(), sys.argv[2])
+
+import pickle
+from numpy import nan
+import spacy, coreferee.data_model
+
 
 nlp = spacy.load("en_core_web_sm")
 nlp.add_pipe("coreferee")
 
 
-def preprocess(text: str):
+def resolve_coref(text: str):
     """
     Substitute all the coreferences. Then split the sentences.
     """
@@ -90,6 +93,10 @@ def preprocess(text: str):
             sent_id += 1
             result[sent_id] = ""
 
+    for key, item in result.items():
+        result[key] = result[key].strip()
+    del result[sent_id]
+
     return result
 
 
@@ -103,10 +110,81 @@ def conjunctive_addition(words: list[str]):
         return ",".join(words[:-1]) + " and " + words[-1]
 
 
+class LazyLoadedClassifier:
+    def __init__(self) -> None:
+        self.is_loaded = False
+        self.model = None
+        self.vec = None
+
+    def predict(self, text: str):
+
+        path = os.path.abspath(os.path.dirname(__file__))
+
+        if self.is_loaded:
+            model = self.model
+            vec = self.vec
+        else:
+            model = pickle.load(
+                open(os.path.join(path, "../classification/bernoulliNB.pickle"), "rb")
+            )
+            vec = pickle.load(
+                open(os.path.join(path, "../classification/tfidf.vec"), "rb")
+            )
+
+        return model.predict(vec.transform([text]))[0]
+
+
 if __name__ == "__main__":
 
-    text = "Although he was very busy with his work, Peter had had enough of it. He and his wife decided they needed a holiday. They travelled to Spain because they loved the country very much."
+    import pandas
+    import os
 
-    result = preprocess(text)
+    # Read data
+    # Resolve corefs
+    # Predict the kind of these new fragments
+    # Write a new dataset
 
-    print(result)
+    CLASSIFIED = pandas.read_csv(
+        os.path.join(os.getcwd(), CLASSIFIED), header=0, index_col=0
+    )
+
+    # each list will be a dataframe column
+    processed_index = []
+    processed_text = []
+    processed_kind = []
+    processed_offset = []  # nan if the fragment is just one sentence during coref
+
+    # Import a trained classifier
+    kind_predictor = LazyLoadedClassifier()
+
+    for index, fragment in CLASSIFIED.iterrows():
+        text = fragment["english"]
+        kind = fragment["kind"]
+
+        # keys are sentence index, items are sentences
+        resolution = resolve_coref(text)
+
+        if len(resolution) == 1:
+            processed_index.append(index)
+            processed_text.append(text)
+            processed_kind.append(kind)
+            processed_offset.append(nan)
+
+        else:
+            # perform predictions
+            for sentence_id, sentence_text in resolution.items():
+                processed_index.append(index)
+                processed_text.append(sentence_text)
+                processed_kind.append(kind_predictor.predict(sentence_text))
+                processed_offset.append(sentence_id)
+
+    new_data = pandas.DataFrame(
+        data={
+            "original label index": processed_index,
+            "english": processed_text,
+            "kind": processed_kind,
+            "offset": processed_offset,
+        }
+    )
+    new_data.to_csv(OUTPUT)
+
