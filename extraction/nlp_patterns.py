@@ -3,7 +3,7 @@ Extract features for one class
 """
 from sys import stderr
 from typing import Callable
-from utils import uml
+from .utils import uml
 import spacy
 from spacy.matcher import PhraseMatcher
 
@@ -48,7 +48,9 @@ class BuiltUML:
             # Number of matches
             print(f"Matches: {len(matched_results)}")
             for match_id, _ in matched_results:
-                string_id = self.nlp_model.vocab.strings[match_id]  # Get string representation
+                string_id = self.nlp_model.vocab.strings[
+                    match_id
+                ]  # Get string representation
                 print(string_id)
 
         return self.select_parsed_result()
@@ -58,7 +60,7 @@ class BuiltUML:
         Combine all the results from the different rules together to form a fragment
         """
         if len(self.uml_result) > 0:
-            found_umls = {}
+            found_umls: dict[str, uml.UML] = {}
             for key, value in self.uml_result.items():
                 if value is None:
                     continue
@@ -73,7 +75,7 @@ class BuiltUML:
                     return found_umls["simple copula"]
                 elif "there is or exists" in found_umls:
                     return found_umls["expletive"]
-                
+
                 elif "to have" in found_umls:
                     return found_umls["to have"]
                 elif "class named" in found_umls:
@@ -86,7 +88,6 @@ class BuiltUML:
 
                 elif "component of package" in found_umls:
                     return found_umls["component of package"]
-                    
 
             elif self.kind == "rel":
 
@@ -96,7 +97,7 @@ class BuiltUML:
                 elif "to have" in found_umls:
                     return found_umls["to have"]
 
-                elif "composed" in found_umls: # this might be changed to gain priority
+                elif "composed" in found_umls:  # this might be changed to gain priority
                     return found_umls["composed"]
 
                 elif "passive voice" in found_umls:
@@ -105,7 +106,6 @@ class BuiltUML:
                 elif "active voice" in found_umls:
                     return found_umls["active voice"]
 
-                
         else:
             return None
 
@@ -255,7 +255,7 @@ compound = [
         "RIGHT_ATTRS": {
             "POS": {"IN": ["PROPN", "NOUN"]},
             "LEMMA": {"NOT_IN": ["class", "Class"]},
-            "DEP": "ROOT"
+            "DEP": "ROOT",
         },
     }
 ]
@@ -342,25 +342,34 @@ class_to_have = [
     # Extracted info: Class with one untyped attribute
     {
         "RIGHT_ID": "have",
-        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": {"IN": ["have", "contain", "include", "comprise"]}}
+        "RIGHT_ATTRS": {
+            "DEP": "ROOT",
+            "POS": "VERB",
+            "LEMMA": {"IN": ["have", "contain", "include", "comprise"]},
+        },
     },
     {
         "LEFT_ID": "have",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"}
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
     },
     {
         "LEFT_ID": "have",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "dobj"}
-    }
+        "RIGHT_ATTRS": {"DEP": "dobj"},
+    },
 ]
 
+
 def process_class_to_have(current_semantics: dict, build: BuiltUML):
-    class_name = make_noun_pascal_case(current_semantics, build, current_semantics["subject"])
-    attribute_name = make_noun_camel_case(current_semantics, build, current_semantics["object"])
+    class_name = make_noun_pascal_case(
+        current_semantics, build, current_semantics["subject"]
+    )
+    attribute_name = make_noun_camel_case(
+        current_semantics, build, current_semantics["object"]
+    )
 
     eclass = uml.UMLClass(class_name, "class")
     eclass.attribute(attribute_name, attribute_type=None)
@@ -368,12 +377,13 @@ def process_class_to_have(current_semantics: dict, build: BuiltUML):
     package.classes.append(eclass)
     return package
 
+
 def make_noun_camel_case(current_semantics: dict, build: BuiltUML, noun: str):
     class_name = ""
 
     noun_token = build.spacy_doc[current_semantics["positions"][noun]]
 
-    tokens : list[str] = []
+    tokens: list[str] = []
 
     for chunk in build.spacy_doc.noun_chunks:
         if noun_token != chunk.root:
@@ -384,11 +394,11 @@ def make_noun_camel_case(current_semantics: dict, build: BuiltUML, noun: str):
             if word.is_stop:
                 continue
 
-            if word.is_upper: # acronym
+            if word.is_upper:  # acronym
                 tokens.append(word.text)
             else:
                 tokens.append(word.lemma_)
-        
+
     if len(tokens) == 0:
         if noun_token.is_upper:
             return noun_token.text
@@ -401,7 +411,7 @@ def make_noun_camel_case(current_semantics: dict, build: BuiltUML, noun: str):
             continue
         class_name += token.capitalize()
 
-    return class_name   
+    return class_name
 
 
 # class named
@@ -410,21 +420,22 @@ class_named = [
     # Extracted info: Empty class object as the name
     {
         "RIGHT_ID": "class",
-        "RIGHT_ATTRS": {"LEMMA": {"IN" : ["class", "Class"]}, "DEP": "ROOT"}
+        "RIGHT_ATTRS": {"LEMMA": {"IN": ["class", "Class"]}, "DEP": "ROOT"},
     },
     {
         "LEFT_ID": "class",
         "REL_OP": ">",
         "RIGHT_ID": "named",
-        "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": "name"}
+        "RIGHT_ATTRS": {"POS": "VERB", "LEMMA": "name"},
     },
     {
         "LEFT_ID": "named",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "oprd"}
-    }
+        "RIGHT_ATTRS": {"DEP": "oprd"},
+    },
 ]
+
 
 def process_class_named(semantics: dict, build: BuiltUML):
     class_name = make_noun_pascal_case(semantics, build, semantics["object"])
@@ -439,29 +450,27 @@ def process_class_named(semantics: dict, build: BuiltUML):
 component_package = [
     # Pattern: (subject) is a component/part of the package ...
     # Extracted: Empty class of that name
-    {
-        "RIGHT_ID": "copula",
-        "RIGHT_ATTRS": {"LEMMA": "be", "DEP": "ROOT"}
-    },
+    {"RIGHT_ID": "copula", "RIGHT_ATTRS": {"LEMMA": "be", "DEP": "ROOT"}},
     {
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "component",
-        "RIGHT_ATTRS": {"DEP": "attr", "LEMMA": {"IN": ["component", "part"]}}
+        "RIGHT_ATTRS": {"DEP": "attr", "LEMMA": {"IN": ["component", "part"]}},
     },
     {
         "LEFT_ID": "component",
         "REL_OP": ">>",
         "RIGHT_ID": "package",
-        "RIGHT_ATTRS": {"LEMMA": "package"}
+        "RIGHT_ATTRS": {"LEMMA": "package"},
     },
     {
         "LEFT_ID": "copula",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"}
-    }
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
+    },
 ]
+
 
 def process_component_package(semantics: dict, build: BuiltUML):
     class_name = make_noun_pascal_case(semantics, build, semantics["subject"])
@@ -470,6 +479,7 @@ def process_component_package(semantics: dict, build: BuiltUML):
     package = uml.UML(eclass)
     package.classes.append(eclass)
     return package
+
 
 # ----------------------------------------------
 
@@ -481,21 +491,26 @@ rel_to_have = [
     # Extracted: Two classes with an unnamed association from subject to object
     {
         "RIGHT_ID": "have",
-        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB", "LEMMA": {"IN": ["have", "contain"]}}
+        "RIGHT_ATTRS": {
+            "DEP": "ROOT",
+            "POS": "VERB",
+            "LEMMA": {"IN": ["have", "contain"]},
+        },
     },
     {
         "LEFT_ID": "have",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"}
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
     },
     {
         "LEFT_ID": "have",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "dobj"}
-    }
+        "RIGHT_ATTRS": {"DEP": "dobj"},
+    },
 ]
+
 
 def process_rel_to_have(semantics: dict, build: BuiltUML):
     source_class = make_noun_pascal_case(semantics, build, semantics["subject"])
@@ -509,6 +524,7 @@ def process_rel_to_have(semantics: dict, build: BuiltUML):
     package = uml.UML(source_eclass.name)
     package.classes.extend([source_eclass, dest_eclass])
     return package
+
 
 # to have with multiplicity check
 rel_to_have_multiplicity = [
@@ -562,7 +578,9 @@ multiplicity_conversion = {
 }
 
 
-def process_rel_to_have_multiplicity(current_semantics: dict, build_in_progress: BuiltUML):
+def process_rel_to_have_multiplicity(
+    current_semantics: dict, build_in_progress: BuiltUML
+):
 
     # Get classes
     source_class_name = make_noun_pascal_case(
@@ -583,6 +601,7 @@ def process_rel_to_have_multiplicity(current_semantics: dict, build_in_progress:
     package = uml.UML(source.name)
     package.classes.extend([source, destination])
     return package
+
 
 def extract_multiplicity(current_semantics, build_in_progress):
     # Get multiplicity
@@ -622,23 +641,24 @@ passive_voice = [
     # Pattern: (subject) is (verb in passive voice) by (object)
     # Extracted: Two classes with a relationship of the verb between them.
     # The relationship is the nominalization of the verb.
-    {
-        "RIGHT_ID": "verb",
-        "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB"}
-    },
+    {"RIGHT_ID": "verb", "RIGHT_ATTRS": {"DEP": "ROOT", "POS": "VERB"}},
     {
         "LEFT_ID": "verb",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubjpass", "POS": {"IN": ["NOUN", "PROPN"]}} # simple passive voice
+        "RIGHT_ATTRS": {
+            "DEP": "nsubjpass",
+            "POS": {"IN": ["NOUN", "PROPN"]},
+        },  # simple passive voice
     },
     {
         "LEFT_ID": "verb",
         "REL_OP": ">>",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "pobj", "POS": {"IN": ["NOUN", "PROPN"]}}
-    }
+        "RIGHT_ATTRS": {"DEP": "pobj", "POS": {"IN": ["NOUN", "PROPN"]}},
+    },
 ]
+
 
 def process_passive_voice(semantics: dict, build: BuiltUML):
     source_class = make_noun_pascal_case(semantics, build, semantics["subject"])
@@ -647,7 +667,7 @@ def process_passive_voice(semantics: dict, build: BuiltUML):
     source_eclass = uml.UMLClass(source_class, "rel")
     dest_eclass = uml.UMLClass(dest_class, "rel")
 
-    association_name = semantics["verb"] # must change this from verb to noun
+    association_name = semantics["verb"]  # must change this from verb to noun
 
     source_eclass.association(dest_eclass, "", association_name)
 
@@ -662,21 +682,22 @@ composed = [
     # Extracted: Two classes with a relation from subject to object
     {
         "RIGHT_ID": "composed",
-        "RIGHT_ATTRS": {"LEMMA": {"IN": ["compose", "associate"]}, "DEP": "ROOT"}
+        "RIGHT_ATTRS": {"LEMMA": {"IN": ["compose", "associate"]}, "DEP": "ROOT"},
     },
     {
         "LEFT_ID": "composed",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubjpass"}
+        "RIGHT_ATTRS": {"DEP": "nsubjpass"},
     },
     {
         "LEFT_ID": "composed",
         "REL_OP": ">>",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"POS": { "IN": ["PROPN", "NOUN"]}}
-    }
+        "RIGHT_ATTRS": {"POS": {"IN": ["PROPN", "NOUN"]}},
+    },
 ]
+
 
 def process_composed(semantics: dict, build: BuiltUML):
     source_name = make_noun_pascal_case(semantics, build, semantics["subject"])
@@ -698,21 +719,22 @@ active_voice = [
     # Extracted: Two classes with a named relation
     {
         "RIGHT_ID": "verb",
-        "RIGHT_ATTRS": {"LEMMA": {"NOT_IN": ["be", "exist"]}, "DEP": "ROOT"}
+        "RIGHT_ATTRS": {"LEMMA": {"NOT_IN": ["be", "exist"]}, "DEP": "ROOT"},
     },
     {
         "LEFT_ID": "verb",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"}
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
     },
     {
         "LEFT_ID": "verb",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "dobj"}
-    }
+        "RIGHT_ATTRS": {"DEP": "dobj"},
+    },
 ]
+
 
 def process_active_voice(semantics: dict, build: BuiltUML):
     source_name = make_noun_pascal_case(semantics, build, semantics["subject"])
@@ -736,24 +758,26 @@ active_voice_preposition = [
     # Extracted: Two classes with a named relation
     {
         "RIGHT_ID": "verb",
-        "RIGHT_ATTRS": {"DEP": "ROOT", "LEMMA": {"NOT_IN": ["be", "exist"]}}
+        "RIGHT_ATTRS": {"DEP": "ROOT", "LEMMA": {"NOT_IN": ["be", "exist"]}},
     },
     {
         "LEFT_ID": "verb",
         "REL_OP": ">",
         "RIGHT_ID": "subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"}
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
     },
     {
         "LEFT_ID": "verb",
         "REL_OP": ">>",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"DEP": "pobj"}
-    }
+        "RIGHT_ATTRS": {"DEP": "pobj"},
+    },
 ]
+
 
 def process_active_voice_preposition(semantics: dict, build: BuiltUML):
     return process_active_voice(semantics, build)
+
 
 # Simple with
 noun_with = [
@@ -761,21 +785,22 @@ noun_with = [
     # Extracted: Two classes with a relation
     {
         "RIGHT_ID": "noun",
-        "RIGHT_ATTRS": {"POS": {"IN": ["PROPN", "NOUN"]}, "DEP": "ROOT"}
+        "RIGHT_ATTRS": {"POS": {"IN": ["PROPN", "NOUN"]}, "DEP": "ROOT"},
     },
     {
         "LEFT_ID": "noun",
         "REL_OP": ">",
         "RIGHT_ID": "with",
-        "RIGHT_ATTRS": {"POS": "ADP", "DEP": "prep", "LEMMA": "with"}
+        "RIGHT_ATTRS": {"POS": "ADP", "DEP": "prep", "LEMMA": "with"},
     },
     {
         "LEFT_ID": "with",
         "REL_OP": ">",
         "RIGHT_ID": "object",
-        "RIGHT_ATTRS": {"POS": {"IN": ["PROPN", "NOUN"]}, "DEP": "pobj"}
-    }
+        "RIGHT_ATTRS": {"POS": {"IN": ["PROPN", "NOUN"]}, "DEP": "pobj"},
+    },
 ]
+
 
 def process_noun_with(semantics: dict, build: BuiltUML):
     source_name = make_noun_pascal_case(semantics, build, semantics["noun"])
@@ -789,4 +814,4 @@ def process_noun_with(semantics: dict, build: BuiltUML):
     package = uml.UML(source_eclass.name)
     package.classes.extend([source_eclass, dest_eclass])
     return package
-    
+

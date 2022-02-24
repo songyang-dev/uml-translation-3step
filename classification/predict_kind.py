@@ -24,10 +24,21 @@ if __name__ == "__main__":
     print(model.predict(vec.transform([sys.argv[1]])))
 
 
-def predict(text: str):
-    path = os.path.abspath(os.path.dirname(__file__))
+class LazyLoadedClassifier:
+    def __init__(self) -> None:
+        self.is_loaded = False
+        self.model = None
+        self.vec = None
 
-    model = pickle.load(open(os.path.join(path, "bernoulliNB.pickle"), "rb"))
-    vec = pickle.load(open(os.path.join(path, "tfidf.vec"), "rb"))
+    def predict(self, text: str):
 
-    return model.predict(vec.transform([text]))
+        path = os.path.abspath(os.path.dirname(__file__))
+
+        if self.is_loaded:
+            model = self.model
+            vec = self.vec
+        else:
+            model = pickle.load(open(os.path.join(path, "bernoulliNB.pickle"), "rb"))
+            vec = pickle.load(open(os.path.join(path, "tfidf.vec"), "rb"))
+
+        return model.predict(vec.transform([text]))[0]
