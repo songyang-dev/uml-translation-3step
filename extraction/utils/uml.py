@@ -94,6 +94,7 @@ class UMLClass:
                     return False
             return True
         else:
+            # might become an infinite recursion
             for rel1, rel2 in zip(self.associations, __o.associations):
                 if rel1 != rel2:
                     return False

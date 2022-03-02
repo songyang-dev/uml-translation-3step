@@ -17,6 +17,7 @@ Procedure
 """
 
 import sys
+from extraction.assemble import assemble
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 and len(sys.argv) != 3:
@@ -33,7 +34,7 @@ if __name__ == "__main__":
         )
         exit(1)
     TEXT = sys.argv[1]
-    USE_FRESH_START = True if len(sys.argv) == 2 or sys.argv[2] == "--fresh" else False
+    USE_FRESH_START = True if "--fresh" in sys.argv else False
 
 import subprocess
 import os
@@ -43,6 +44,8 @@ from extraction.parse import LazyLoadedExtractor
 
 
 def prepare_classifier():
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    os.chdir(script_path)
     if os.path.exists("data/fragment_kinds.csv") and not USE_FRESH_START:
         return
     subprocess.call(["bash", "prepare_classifier.sh", "..", "data/"])
@@ -86,3 +89,5 @@ if __name__ == "__main__":
     # assembly
     # TODO
     print(extracted_umls)
+    combined = assemble(extracted_umls)
+    print(combined)
