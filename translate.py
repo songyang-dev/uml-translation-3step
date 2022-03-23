@@ -90,4 +90,7 @@ if __name__ == "__main__":
     # TODO
     print(extracted_umls)
     combined = assemble(extracted_umls)
-    print(combined)
+
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    combined.save(os.path.join(script_path, "out.plantuml"))
+

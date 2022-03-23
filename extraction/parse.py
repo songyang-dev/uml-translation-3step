@@ -1,7 +1,7 @@
 """
 Parse the English text using rules
 """
-from . import nlp_patterns
+import nlp_patterns
 
 if __name__ == "__main__":
     import os

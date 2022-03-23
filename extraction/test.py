@@ -240,7 +240,7 @@ def test_semantics():
     return passed_details, failed_details, wrong_details
 
 
-def unit_parsing(test_rule, test_all_rules):
+def unit_parsing():
     print(termcolor.colored("UNIT PARSING", "yellow"))
     print("OVERVIEW")
     test_rule(
@@ -327,7 +327,7 @@ def unit_parsing(test_rule, test_all_rules):
 
 
 if __name__ == "__main__":
-    unit_parsing(test_rule, test_all_rules)
+    unit_parsing()
 
     print(termcolor.colored("SEMANTIC EVALUATION", "yellow"))
     test_semantics()

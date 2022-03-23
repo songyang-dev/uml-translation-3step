@@ -1,5 +1,5 @@
 """
-Perform a holistic testing on the entire pipeline
+Group fragments together according model
 """
 import os
 from sys import argv

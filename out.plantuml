@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+class Petri
+{
+place
+}
+class Place
+{
+}
+Place --> ExactlyNet
+class ExactlyNet
+{
+}
+class PetriNet
+{
+}
+PetriNet --> Place
+class PetriNet
+{
+transition
+}
+class PetriNetModel
+{
+net
+}
+class PetriNetModel
+{
+arc
+}
+class Transition
+{
+}
+Transition --> One
+class One
+{
+}
+class Ptarc
+{
+}
+Ptarc --> DstTransition
+class DstTransition
+{
+}
+class Tparc
+{
+}
+Tparc --> SrcTransition
+class SrcTransition
+{
+}
+@enduml
