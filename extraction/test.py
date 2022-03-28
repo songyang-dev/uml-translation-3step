@@ -26,7 +26,7 @@ os.makedirs(TEMP_FOLDER, exist_ok=True)
 # Read the preprocessed csv for classification
 PREPROCESSED_CSV = os.path.join(os.getcwd(), argv[1])
 
-FRAGMENTS = pd.read_csv(PREPROCESSED_CSV, header=0, index_col=0)
+PREPROCESSED_CSV_DATAFRAME = pd.read_csv(PREPROCESSED_CSV, header=0, index_col=0)
 
 # Test one rule on the data set
 def test_rule(
@@ -48,7 +48,7 @@ def test_rule(
     failed_fragments_indices = []
 
     # test the rule on every fragment of the same kind
-    for index, fragment in FRAGMENTS.iterrows():
+    for index, fragment in PREPROCESSED_CSV_DATAFRAME.iterrows():
 
         if fragment["kind"] != kind:
             continue
@@ -115,7 +115,7 @@ def test_all_rules(kind: str):
     failed_fragments_indices = []
 
     # test the rule on every fragment of the same kind
-    for index, fragment in FRAGMENTS.iterrows():
+    for index, fragment in PREPROCESSED_CSV_DATAFRAME.iterrows():
 
         if fragment["kind"] != kind:
             continue
@@ -162,8 +162,8 @@ def test_all_rules(kind: str):
 
 def test_semantics():
     """
-  Tests all the rules at once on the semantics of a fragment
-  """
+    Tests all the rules at once on the semantics of a fragment
+    """
     extractor = nlp_patterns.BuiltUML("", "class")
 
     # stats
@@ -178,7 +178,7 @@ def test_semantics():
     wrong_fragments = []
     wrong_fragments_indices = []
 
-    for index, fragment in FRAGMENTS.iterrows():
+    for index, fragment in PREPROCESSED_CSV_DATAFRAME.iterrows():
         kind = fragment["kind"]
 
         extractor.clear_rules()

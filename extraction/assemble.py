@@ -1,7 +1,7 @@
 """
 Take the fragments and put them together
 """
-from .utils import uml
+from utils import uml
 
 
 def assemble(fragments: list[uml.UML]):

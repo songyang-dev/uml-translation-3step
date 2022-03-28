@@ -13,6 +13,7 @@ import pyecore.ecore as ecore
 
 if __name__ == "__main__":
     import uml
+
     if len(argv) != 3:
         print("Usage: py inquire.py dir_where_the_data_is label_id")
         exit(1)
@@ -21,6 +22,7 @@ if __name__ == "__main__":
 
 else:
     from . import uml
+
     source_dir = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\cleaning\\"
 
 fragments_csv = os.path.join(source_dir, "fragments.csv")
@@ -33,6 +35,7 @@ MODELS = pandas.read_csv(models_csv)
 
 CURRENT_FRAGMENT = None
 
+
 class PlantUMLSwitch(object):
     def __init__(self):
         self.visited = set()
@@ -43,6 +46,8 @@ class PlantUMLSwitch(object):
     @dispatch
     def generate(self, o):
         self.current_element = o
+        if o.eClass.name == "EEnum":
+            return
         print("Object kind unsupported", o.eClass.name)
 
     @generate.register(ecore.EPackage)
@@ -54,7 +59,7 @@ class PlantUMLSwitch(object):
 
     @generate.register(ecore.EClass)
     def eclass_switch(self, o):
-        
+
         self.current_element = uml.UMLClass(o.name, "rel")
         self.result.classes.append(self.current_element)
 
@@ -62,12 +67,12 @@ class PlantUMLSwitch(object):
             self.generate(attrib)
 
         for ref in o.eReferences:
-            
+
             self.generate(ref)
 
     @generate.register(ecore.EAttribute)
     def eattribute_switch(self, a):
-        self.current_element : uml.UMLClass
+        self.current_element: uml.UMLClass
         self.current_element.attribute(a.name, a.eType.name)
 
     @generate.register(ecore.EReference)
@@ -81,9 +86,14 @@ class PlantUMLSwitch(object):
         link = "--"
         if ref.containment:
             link = "*" + link
-        
+
         link += ">"
-        self.association = (ref.eContainer().name, ref.eType.name, f"{ref.lower}..{'*' if ref.many else ref.upper}", ref.name)
+        self.association = (
+            ref.eContainer().name,
+            ref.eType.name,
+            f"{ref.lower}..{'*' if ref.many else ref.upper}",
+            ref.name,
+        )
 
     # @generate.register(ecore.EDataType)
     # def edatatype_switch(self, o):
@@ -100,8 +110,11 @@ class PlantUMLSwitch(object):
             else:
                 source_eclass = self.result.classes[1]
                 dest_eclass = self.result.classes[0]
-            
-            source_eclass.association(dest_eclass, self.association[2], self.association[3])
+
+            source_eclass.association(
+                dest_eclass, self.association[2], self.association[3]
+            )
+
 
 def get_uml_fragment(label_id: int):
     # Get fragment unique id
@@ -129,12 +142,29 @@ def get_uml_fragment(label_id: int):
     switch = PlantUMLSwitch()
     switch.generate(root)
     switch.completion()
-    
+
     if fragment["kind"].values[0] == "class":
         switch.result.classes[0].kind = "class"
-    
+
     if switch.result is None:
         raise Exception("No original fragment!!")
+    return switch.result
+
+
+def get_uml_model(name: str):
+    """
+    Builds the model from the uml
+    """
+    # UML Ecore
+    rset = ResourceSet()
+    metamodel_resource = rset.get_resource(
+        os.path.join(source_dir, "zoo", name + ".ecore")
+    )
+    root = metamodel_resource.contents[0]
+    switch = PlantUMLSwitch()
+    switch.generate(root)
+    switch.completion()
+
     return switch.result
 
 

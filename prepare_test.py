@@ -7,7 +7,7 @@ import pandas
 
 if __name__ == "__main__":
     if len(argv) != 2:
-        print("Usage: python test.py source-data-dir")
+        print("Usage: python prepare_test.py source-data-dir")
         exit(1)
     SOURCE_DIR = argv[1]
 
