@@ -1,3 +1,4 @@
+import shutil
 from utils import inquire, uml
 import assemble
 
@@ -56,10 +57,13 @@ def test_assembly():
     failed = 0
     failed_models = []
 
+    passed_predictions: list[uml.UML] = []
+    failed_predictions: list[uml.UML] = []
+
     # print predictions and ground truths
     results_folder = os.path.join(TEMP_FOLDER, "assembly")
     os.makedirs(results_folder, exist_ok=True)
-    os.removedirs(results_folder)
+    shutil.rmtree(results_folder)
     os.makedirs(results_folder, exist_ok=True)
 
     if len(assembled_models) != len(models):
@@ -72,6 +76,8 @@ def test_assembly():
         if prediction == original:
             passed += 1
             passed_models.append(model_name)
+            passed_predictions.append(prediction)
+
             prediction.save(
                 os.path.join(results_folder, model_name + "_prediction_passed.plantuml")
             )
@@ -81,6 +87,8 @@ def test_assembly():
         else:
             failed += 1
             failed_models.append(model_name)
+            failed_predictions.append(prediction)
+
             prediction.save(
                 os.path.join(results_folder, model_name + "_prediction_failed.plantuml")
             )
@@ -91,12 +99,27 @@ def test_assembly():
     print("Passed", passed)
     print("Failed", failed)
 
-    with open(os.path.join(TEMP_FOLDER, "assembly_passed.txt"), "w") as out:
-        for line in passed_models:
-            out.write(line + "\n")
-    with open(os.path.join(TEMP_FOLDER, "assembly_failed.txt"), "w") as out:
-        for line in failed_models:
-            out.write(line + "\n")
+    # More detailed metrics for the predictions and the models
+    passed_model_class_counts = [len(model.classes) for model in passed_predictions]
+    failed_model_class_counts = [len(model.classes) for model in failed_predictions]
+
+    original_model_class_counts = []
+    for prediction in failed_models:
+        original_model_class_counts.append(len(models[prediction].classes))
+
+    passed_dataframe = pandas.DataFrame(
+        data={"model": passed_models, "class count": passed_model_class_counts}
+    )
+    failed_dataframe = pandas.DataFrame(
+        data={
+            "model": failed_models,
+            "class count": failed_model_class_counts,
+            "original class count": original_model_class_counts,
+        }
+    )
+
+    passed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "assembly_passed.csv"))
+    failed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "assembly_failed.csv"))
 
 
 if __name__ == "__main__":
