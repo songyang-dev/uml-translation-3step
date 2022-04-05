@@ -48,6 +48,10 @@ def resolve_coref(text: str):
             if doc[mention.root_index].text in ["his", "her", "its"]:
                 continue
 
+            # only substitute pronouns
+            if not doc[mention.root_index].text in ["it", "them"]:
+                continue
+
             # record changes of all mentions to be the most specific one
             # root, (source indexes, new indexes)
             substitutions[mention.root_index] = (

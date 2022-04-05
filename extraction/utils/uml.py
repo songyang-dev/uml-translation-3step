@@ -12,6 +12,7 @@ from typing import List, Tuple
 class UMLClass:
     def __init__(self, name: str, kind: str) -> None:
         self.name = name
+        # name, type
         self.attributes: List[Tuple[str, str]] = []
         self.associations: List[Tuple["UMLClass", str, str]] = []
         self.kind = kind
