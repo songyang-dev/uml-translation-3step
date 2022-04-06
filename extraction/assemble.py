@@ -48,6 +48,7 @@ def assemble(fragments: list[uml.UML]):
 
                 existing_class.attributes = merged_attributes
                 model_in_progress.classes[existing_class_index] = existing_class
+                continue
 
             # indirect match
             result = indirect_matching_class(model_in_progress, incoming_class)
@@ -87,6 +88,9 @@ def assemble(fragments: list[uml.UML]):
                 # TODO
                 pass
 
+            # no match
+            # TODO: Instantiate new classes and relationships
+
 
 def merge_attributes(incoming_class, existing_class):
     # Merge attributes
@@ -111,33 +115,46 @@ def merge_attributes(incoming_class, existing_class):
                 merged_attributes.append(incoming_attr)
     return merged_attributes
 
-    # no match
-    # TODO: Instantiate new classes and relationships
-
 
 def indirect_matching_class(model: uml.UML, prospective_class: uml.UMLClass):
     """
     Checks for the most similar things in the model. If nothing, return None.
+
+    Returns the merged model.
     """
     # Case 1: The model contains an attribute similar to the class.
     # Remove the attribute from the model and create a new relationship to the class
 
     # find all attributes that are identical to the prospective class
     for existing_class in model.classes:
+        found_attribute = False
+
+        new_attributes = existing_class.attributes.copy()
+
         for attribute in existing_class.attributes:
             name, _ = attribute
 
             # there is an identical attribute
             if name.lower() == prospective_class.name.lower():
-                # TODO
-                pass
+                new_attributes.remove(attribute)
+                found_attribute = True
+
+        # this existing class contains an identical attribute
+        if found_attribute:
+            existing_class.attributes = new_attributes
+
+            # create new rel to the new class
+            existing_class.association(prospective_class)
+
+    model.classes.append(prospective_class)
 
     # Case 2: The model contains a relationship *identical* to the class.
     # Introduce the prospective class as a new class, leaving the rest untouched
-    return None  # The default action in assemble() will take care of it
+    # return None  # The default action in assemble() will take care of it
 
     # Case 3: Cases 1 and 2 happen together
     # Do both
+    return model
 
 
 def most_similar_to_rel(model: uml.UML, prospective_rel: uml.UMLClass):
