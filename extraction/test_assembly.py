@@ -30,10 +30,14 @@ def test_assembly():
     grouped: dict[str, list[uml.UML]] = {}
 
     for index, row in LABELS.iterrows():
+
         fragment = FRAGMENTS.loc[FRAGMENTS["unique_id"] == row["fragment_id"]]
 
         # get the model's uml
         model_name = fragment["model"].values[0]
+        # # selective runs
+        # if model_name != "CFG":
+        #     continue
         model = inquire.get_uml_model(model_name)
         models[model_name] = model
 
@@ -48,6 +52,9 @@ def test_assembly():
     # Apply the algorithm to groups of fragments
     assembled_models: dict[str, uml.UML] = {}
     for model_name, fragments in grouped.items():
+        # # selective runs
+        # if model_name != "CFG":
+        #     continue
         assembled = assemble.assemble(fragments=fragments)
         assembled_models[model_name] = assembled
 
@@ -66,8 +73,8 @@ def test_assembly():
     shutil.rmtree(results_folder)
     os.makedirs(results_folder, exist_ok=True)
 
-    if len(assembled_models) != len(models):
-        raise Exception("There are different amounts of assembled models than models.")
+    # if len(assembled_models) != len(models):
+    #     raise Exception("There are different amounts of assembled models than models.")
 
     for predicted, ground_truth in zip(assembled_models.items(), models.items()):
         model_name, prediction = predicted

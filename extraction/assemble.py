@@ -1,7 +1,6 @@
 """
 Take the fragments and put them together
 """
-import itertools
 from typing import Tuple
 from utils import uml
 
@@ -14,14 +13,14 @@ def assemble(fragments: list[uml.UML]):
     model_in_progress = fragments[0]
 
     # trivial case
-    if len(fragments == 1):
+    if len(fragments) == 1:
         return model_in_progress
 
     # re-order the fragments to start with classes
     incoming_classes = []
     incoming_rels = []
     for fragment in fragments:
-        if fragment.classes[0].kind:
+        if fragment.classes[0].kind == "class":
             incoming_classes.append(fragment)
         else:
             incoming_rels.append(fragment)
@@ -30,24 +29,24 @@ def assemble(fragments: list[uml.UML]):
     for incoming_fragment in fragments[1:]:
 
         # class fragment
-        if len(incoming_fragment.classes == 1):
+        if len(incoming_fragment.classes) == 1:
             incoming_class = incoming_fragment.classes[0]
 
             # check for existing similarities
 
             # direct match
             existing_class = None
-            existing_class_index = -1
+            existing_source_class_index = -1
             for index, m in enumerate(model_in_progress.classes):
                 if m.name == incoming_class.name:
                     existing_class = m
-                    existing_class_index = index
+                    existing_source_class_index = index
             if existing_class is not None:
 
                 merged_attributes = merge_attributes(incoming_class, existing_class)
 
                 existing_class.attributes = merged_attributes
-                model_in_progress.classes[existing_class_index] = existing_class
+                model_in_progress.classes[existing_source_class_index] = existing_class
                 continue
 
             # indirect match
@@ -60,36 +59,53 @@ def assemble(fragments: list[uml.UML]):
 
             # no match
             model_in_progress.classes.append(incoming_class)
+            continue
 
         # rel fragment
-        # TODO
         else:
 
             if len(incoming_fragment.classes[0].associations) != 0:
                 incoming_rel = incoming_fragment.classes[0].associations[0]
+                rel_source_class_name = incoming_fragment.classes[0].name
             else:
                 incoming_rel = incoming_fragment.classes[1].associations[0]
+                rel_source_class_name = incoming_fragment.classes[1].name
 
-            # check for existing rel
+            # check for existing classes
 
             # perfect match
-            # TODO: Optimize using the class names
-            if incoming_rel in list(
-                itertools.chain(
-                    *[uml_class.associations for uml_class in model_in_progress.classes]
+            rel_dest_class_name = incoming_rel[0].name
+            existing_source_class_index = -1
+            existing_dest_class_index = -1
+
+            for index, existing_class in enumerate(model_in_progress.classes):
+                if existing_class.name == rel_source_class_name:
+                    existing_source_class_index = index
+                if existing_class.name == rel_dest_class_name:
+                    existing_dest_class_index = index
+
+            if existing_source_class_index != -1 and existing_dest_class_index != -1:
+                # make a new rel between the two classes
+                model_in_progress.classes[existing_source_class_index].association(
+                    model_in_progress.classes[existing_dest_class_index],
+                    incoming_rel[1],
+                    incoming_rel[2],
                 )
-            ):
                 continue
 
             # indirect match
 
-            result = most_similar_to_rel(model_in_progress, incoming_rel)
+            result = indirect_matching_rel(model_in_progress, incoming_rel)
             if result is not None:
-                # TODO
-                pass
+                model_in_progress = result
+                continue
 
             # no match
             # TODO: Instantiate new classes and relationships
+            model_in_progress.classes.extend(incoming_fragment.classes)
+
+            continue
+    return model_in_progress
 
 
 def merge_attributes(incoming_class, existing_class):
@@ -143,8 +159,11 @@ def indirect_matching_class(model: uml.UML, prospective_class: uml.UMLClass):
         if found_attribute:
             existing_class.attributes = new_attributes
 
+            association_name = prospective_class.name
+            association_name = association_name[0].lower() + association_name[1:]
+
             # create new rel to the new class
-            existing_class.association(prospective_class)
+            existing_class.association(prospective_class, "", association_name)
 
     model.classes.append(prospective_class)
 
@@ -157,9 +176,12 @@ def indirect_matching_class(model: uml.UML, prospective_class: uml.UMLClass):
     return model
 
 
-def most_similar_to_rel(model: uml.UML, prospective_rel: uml.UMLClass):
+def indirect_matching_rel(model: uml.UML, prospective_rel: uml.UMLClass):
     """
     Checks for the most similar things in the model with respect to the rel. If nothing, return None.
+
+    Returns the merged model.
     """
     # TODO
-    pass
+    # Do nothing for now
+    return None

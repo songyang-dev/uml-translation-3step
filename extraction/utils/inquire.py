@@ -3,7 +3,7 @@ Utility script for probing into the fragment dataset
 """
 
 import os
-from sys import argv
+from sys import argv, stdout
 
 import pandas
 from pyecore.resources import ResourceSet
@@ -14,16 +14,10 @@ import pyecore.ecore as ecore
 if __name__ == "__main__":
     import uml
 
-    if len(argv) != 3:
-        print("Usage: py inquire.py dir_where_the_data_is label_id")
-        exit(1)
-    source_dir = argv[1]
-    label_id = argv[2]
-
 else:
     from . import uml
 
-    source_dir = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\cleaning\\"
+source_dir = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\cleaning\\"
 
 fragments_csv = os.path.join(source_dir, "fragments.csv")
 labels_csv = os.path.join(source_dir, "labels.csv")
@@ -170,5 +164,5 @@ def get_uml_model(name: str):
 
 if __name__ == "__main__":
 
-    get_uml_fragment(int(label_id))
-    print(CURRENT_FRAGMENT)
+    model = get_uml_model("CFG")
+    model._to_plantuml(stdout)

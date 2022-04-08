@@ -35,6 +35,8 @@ class UMLClass:
 
         if self.kind == "class":
             self._class_to_plantuml(file_object)
+            if len(self.associations) != 0:
+                self._associations_to_plantuml(file_object)
 
         elif self.kind == "association":
             self._associations_to_plantuml(file_object)
