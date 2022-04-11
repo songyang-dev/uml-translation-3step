@@ -161,6 +161,8 @@ def get_uml_model(name: str):
 
     return switch.result
 
+def get_uml_from_json(filename: str):
+    pass
 
 if __name__ == "__main__":
 
