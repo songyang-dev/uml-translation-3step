@@ -195,7 +195,7 @@ def test_semantics():
         # matches
         if result != None:
             # check semantics
-            ground_truth = inquire.get_uml_fragment(index)
+            ground_truth = inquire.get_ecore_uml_fragment(index)
             if ground_truth == result:
                 passed += 1
                 passed_fragments.append(fragment["english"])

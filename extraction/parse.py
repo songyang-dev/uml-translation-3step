@@ -29,6 +29,9 @@ if __name__ == "__main__":
 
 
 class LazyLoadedExtractor:
+    """
+    See ../translate.py for example usage
+    """
     def __init__(self, text: str, kind: str) -> None:
         self.extractor = nlp_patterns.BuiltUML(sentence=text, kind=kind)
 

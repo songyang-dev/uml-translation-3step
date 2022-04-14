@@ -110,7 +110,7 @@ class PlantUMLSwitch(object):
             )
 
 
-def get_uml_fragment(label_id: int):
+def get_ecore_uml_fragment(label_id: int):
     # Get fragment unique id
     label = LABELS.loc[LABELS["id"] == label_id]
     fragment_id = label["fragment_id"].values[0]
@@ -145,7 +145,7 @@ def get_uml_fragment(label_id: int):
     return switch.result
 
 
-def get_uml_model(name: str):
+def get_ecore_uml_model(name: str):
     """
     Builds the model from the uml
     """
@@ -161,10 +161,27 @@ def get_uml_model(name: str):
 
     return switch.result
 
-def get_uml_from_json(filename: str):
+
+def get_uml_fragment_name(label_id: int):
+    # Get fragment unique id
+    label = LABELS.loc[LABELS["id"] == label_id]
+    fragment_id = label["fragment_id"].values[0]
+
+    fragment = FRAGMENTS.loc[FRAGMENTS["unique_id"] == fragment_id]
+
+    fragment_name = "{}_{}{}".format(
+        fragment["model"].values[0],
+        fragment["kind"].values[0],
+        fragment["number"].values[0],
+    )
+    return fragment_name
+
+
+def get_json_uml(filename: str):
     pass
+
 
 if __name__ == "__main__":
 
-    model = get_uml_model("CFG")
+    model = get_ecore_uml_model("CFG")
     model._to_plantuml(stdout)
