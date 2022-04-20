@@ -1,8 +1,10 @@
 import pickle
+import re
 import shutil
 from utils import inquire, uml
 import assemble
 from parse import LazyLoadedExtractor
+from preprocess import resolve_coref, LazyLoadedClassifier
 
 import os, pandas
 
@@ -16,6 +18,12 @@ os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 LABELS = pandas.read_csv(os.path.join(SOURCE_DIR, "labels.csv"))
 FRAGMENTS = pandas.read_csv(os.path.join(SOURCE_DIR, "fragments.csv"))
+
+
+PICKLED_DIR = os.path.join(TEMP_FOLDER, "pickled")
+os.makedirs(PICKLED_DIR, exist_ok=True)
+PREPROCESSED_PICKLED_DIR = os.path.join(PICKLED_DIR, "preprocessed")
+os.makedirs(PREPROCESSED_PICKLED_DIR, exist_ok=True)
 
 
 def test_assembly_ground_truth():
@@ -143,9 +151,6 @@ def run_nlp_pipeline():
         classified_fragments_path, header=0, index_col=0
     )
 
-    pickled_directory = os.path.join(TEMP_FOLDER, "pickled")
-    os.makedirs(pickled_directory, exist_ok=True)
-
     class_extractor = LazyLoadedExtractor("", "class")
     rel_extractor = LazyLoadedExtractor("", "rel")
 
@@ -164,9 +169,52 @@ def run_nlp_pipeline():
             ground_truth_fragment_name = inquire.get_uml_fragment_name(index)
             # pickle the uml under this name
             with open(
-                os.path.join(pickled_directory, ground_truth_fragment_name), "wb+"
+                os.path.join(PICKLED_DIR, ground_truth_fragment_name), "wb+"
             ) as pickled_file:
                 pickle.dump(result, pickled_file)
+
+
+def run_nlp_pipeline_preprocessed():
+    classified_fragments_path = os.path.join(
+        SOURCE_DIR, "three-step", "data", "grouped.csv"
+    )
+    classified_fragments = pandas.read_csv(
+        classified_fragments_path, header=0, index_col=0
+    )
+
+    class_extractor = LazyLoadedExtractor("", "class")
+    rel_extractor = LazyLoadedExtractor("", "rel")
+    classifier = LazyLoadedClassifier()
+
+    for row_index, row in classified_fragments.iterrows():
+        model_name = row["model"]
+
+        # call preprocessor
+        split_sentences = resolve_coref(row["text"])
+
+        for index, sentence in split_sentences.items():
+
+            # call classifier
+            kind = classifier.predict(text=sentence)
+            if kind == "class":
+                class_extractor.extractor.set_sentence(sentence)
+                result = class_extractor.handle_class(verbose=False)
+            elif kind == "rel":
+                rel_extractor.extractor.set_sentence(sentence)
+                result = rel_extractor.handle_rel(verbose=False)
+            else:
+                raise Exception("Unexpected kind!")
+
+            # save the result to disk
+            if result is not None:
+                # get the name of this fragment
+                ground_truth_fragment_name = f"{model_name}_{kind}{index}"
+                # pickle the uml under this name
+                with open(
+                    os.path.join(PREPROCESSED_PICKLED_DIR, ground_truth_fragment_name),
+                    "wb+",
+                ) as pickled_file:
+                    pickle.dump(result, pickled_file)
 
 
 def test_assembly(used_preprocessed: bool = False):
@@ -177,19 +225,44 @@ def test_assembly(used_preprocessed: bool = False):
     """
 
     # Use the NLP pipeline and save intermediary results to disk
-    run_nlp_pipeline()
 
     # Read raw fragments from the fragment_kinds.csv
     if not used_preprocessed:
-        pass
+        if len(os.listdir(PICKLED_DIR)) == 0:
+            run_nlp_pipeline()
+
+        grouped = read_pickles(PICKLED_DIR)
 
     # Read preprocessed fragments from the split.csv
     else:
-        pass
+        if len(os.listdir(PREPROCESSED_PICKLED_DIR)) == 0:
+            run_nlp_pipeline_preprocessed()
+        grouped = read_pickles(PREPROCESSED_PICKLED_DIR)
+
+    results = {}
+
+    for model_name, fragments in grouped.items():
+        results[model_name] = assemble.assemble(fragments)
 
     # Compare the assembled result with ground truth, version "zoo plantuml"
     # This depends on the plantuml parser
 
 
+def read_pickles(location: str):
+    grouped = {}  # model name, list of fragments
+
+    for pickled_path in os.listdir(location):
+        with open(os.path.join(location, pickled_path)) as pickled_file:
+            pickled: uml.UML = pickle.load(pickled_file)
+
+        model_name = re.split("_(class|rel)\d+", pickled_path)[0]
+
+        if model_name in grouped:
+            grouped[model_name].append(pickled)
+        else:
+            grouped[model_name] = []
+    return grouped
+
+
 if __name__ == "__main__":
-    run_nlp_pipeline()
+    run_nlp_pipeline_preprocessed()

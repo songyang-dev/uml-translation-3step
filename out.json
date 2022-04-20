@@ -1,0 +1,232 @@
+{
+  "elements": [
+    {
+      "name": "Petri",
+      "title": "Petri",
+      "isAbstract": false,
+      "members": [
+        {
+          "name": "place",
+          "isStatic": false,
+          "accessor": "+",
+          "type": ""
+        }
+      ],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "name": "Place",
+      "title": "Place",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "left": "Place",
+      "right": "ExactlyNet",
+      "leftType": "Unknown",
+      "rightType": "Unknown",
+      "leftArrowHead": "",
+      "rightArrowHead": ">",
+      "leftArrowBody": "-",
+      "rightArrowBody": "-",
+      "leftCardinality": "",
+      "rightCardinality": "",
+      "label": "",
+      "hidden": false
+    },
+    {
+      "name": "ExactlyNet",
+      "title": "ExactlyNet",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "name": "PetriNet",
+      "title": "PetriNet",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "left": "PetriNet",
+      "right": "Place",
+      "leftType": "Unknown",
+      "rightType": "Unknown",
+      "leftArrowHead": "",
+      "rightArrowHead": ">",
+      "leftArrowBody": "-",
+      "rightArrowBody": "-",
+      "leftCardinality": "",
+      "rightCardinality": "",
+      "label": "",
+      "hidden": false
+    },
+    {
+      "name": "PetriNet",
+      "title": "PetriNet",
+      "isAbstract": false,
+      "members": [
+        {
+          "name": "transition",
+          "isStatic": false,
+          "accessor": "+",
+          "type": ""
+        }
+      ],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "name": "PetriNetModel",
+      "title": "PetriNetModel",
+      "isAbstract": false,
+      "members": [
+        {
+          "name": "net",
+          "isStatic": false,
+          "accessor": "+",
+          "type": ""
+        }
+      ],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "name": "PetriNetModel",
+      "title": "PetriNetModel",
+      "isAbstract": false,
+      "members": [
+        {
+          "name": "arc",
+          "isStatic": false,
+          "accessor": "+",
+          "type": ""
+        }
+      ],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "name": "Transition",
+      "title": "Transition",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "left": "Transition",
+      "right": "One",
+      "leftType": "Unknown",
+      "rightType": "Unknown",
+      "leftArrowHead": "",
+      "rightArrowHead": ">",
+      "leftArrowBody": "-",
+      "rightArrowBody": "-",
+      "leftCardinality": "",
+      "rightCardinality": "",
+      "label": "",
+      "hidden": false
+    },
+    {
+      "name": "One",
+      "title": "One",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "name": "Ptarc",
+      "title": "Ptarc",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "left": "Ptarc",
+      "right": "DstTransition",
+      "leftType": "Unknown",
+      "rightType": "Unknown",
+      "leftArrowHead": "",
+      "rightArrowHead": ">",
+      "leftArrowBody": "-",
+      "rightArrowBody": "-",
+      "leftCardinality": "",
+      "rightCardinality": "",
+      "label": "",
+      "hidden": false
+    },
+    {
+      "name": "DstTransition",
+      "title": "DstTransition",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "name": "Tparc",
+      "title": "Tparc",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    },
+    {
+      "left": "Tparc",
+      "right": "SrcTransition",
+      "leftType": "Unknown",
+      "rightType": "Unknown",
+      "leftArrowHead": "",
+      "rightArrowHead": ">",
+      "leftArrowBody": "-",
+      "rightArrowBody": "-",
+      "leftCardinality": "",
+      "rightCardinality": "",
+      "label": "",
+      "hidden": false
+    },
+    {
+      "name": "SrcTransition",
+      "title": "SrcTransition",
+      "isAbstract": false,
+      "members": [],
+      "extends_": [],
+      "implements_": [],
+      "generics": [],
+      "stereotypes": []
+    }
+  ]
+}
