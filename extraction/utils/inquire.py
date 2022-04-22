@@ -2,6 +2,7 @@
 Utility script for probing into the fragment dataset
 """
 
+import json
 import os
 from sys import argv, stdout
 
@@ -178,10 +179,91 @@ def get_uml_fragment_name(label_id: int):
 
 
 def get_json_uml(filename: str):
-    pass
+    with open(filename, "rb") as json_path:
+        json_object = json.load(json_path)
+
+    # plantuml-parser syntax
+    # get the uml package
+    package_level = json_object["elements"][0]
+
+    package_name = package_level["name"]
+
+    # uml
+    model_read = uml.UML(package_name)
+
+    package_elements = package_level["elements"]
+
+    package_relations = []
+
+    for element in package_elements:
+        if "name" in element:
+            # this is a class
+            class_fragment = uml.UMLClass(element["name"], "class")
+
+            # attributes
+            if len(element["members"]) != 0:
+                for member in element["members"]:
+                    class_fragment.attribute(member["name"], member["type"])
+
+            model_read.classes.append(class_fragment)
+
+        else:
+            # this is a relationship
+            package_relations.append(element)
+
+    for relation in package_relations:
+        # zoo format
+
+        # source class
+        try:
+            source_class = [
+                eclass
+                for eclass in model_read.classes
+                if eclass.name == relation["left"]
+            ].pop()
+        except IndexError:
+            # create the class
+            source_class = uml.UMLClass(relation["left"], "class")
+            model_read.classes.append(source_class)
+
+        # destination class
+        try:
+            dest_class = [
+                eclass
+                for eclass in model_read.classes
+                if eclass.name == relation["right"]
+            ].pop()
+        except IndexError:
+            # create the class
+            dest_class = uml.UMLClass(relation["right"], "class")
+            model_read.classes.append(dest_class)
+
+        # cardinality and name
+        split_cardinality: list[str] = relation["leftCardinality"].split()
+        if relation["leftCardinality"] == "":
+            cardinality, name = "", ""
+
+        elif len(split_cardinality) == 1:
+            if split_cardinality[0].isalpha():
+                cardinality = ""
+                name = split_cardinality[0]
+            else:
+                cardinality = split_cardinality[0]
+                name = ""
+
+        elif len(split_cardinality) != 2:
+            raise Warning(
+                "Unexpected cardinality, {}".format(relation["leftCardinality"])
+            )
+        else:
+            name, cardinality = split_cardinality
+
+        source_class.association(dest_class, cardinality, name)
+
+    return model_read
 
 
 if __name__ == "__main__":
 
-    model = get_ecore_uml_model("CFG")
+    model = get_json_uml("temp/cfg/CFG.json")
     model._to_plantuml(stdout)

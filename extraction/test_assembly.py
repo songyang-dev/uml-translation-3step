@@ -1,6 +1,7 @@
 import pickle
 import re
 import shutil
+import subprocess
 from utils import inquire, uml
 import assemble
 from parse import LazyLoadedExtractor
@@ -19,11 +20,14 @@ os.makedirs(TEMP_FOLDER, exist_ok=True)
 LABELS = pandas.read_csv(os.path.join(SOURCE_DIR, "labels.csv"))
 FRAGMENTS = pandas.read_csv(os.path.join(SOURCE_DIR, "fragments.csv"))
 
-
 PICKLED_DIR = os.path.join(TEMP_FOLDER, "pickled")
 os.makedirs(PICKLED_DIR, exist_ok=True)
 PREPROCESSED_PICKLED_DIR = os.path.join(PICKLED_DIR, "preprocessed")
 os.makedirs(PREPROCESSED_PICKLED_DIR, exist_ok=True)
+
+PLANTUML_PARSER = os.path.join(
+    SOURCE_DIR, "three-step", "extraction", "plantuml-parser.js"
+)
 
 
 def test_assembly_ground_truth():
@@ -45,9 +49,11 @@ def test_assembly_ground_truth():
 
         # get the model's uml
         model_name = fragment["model"].values[0]
-        # selective runs
-        if model_name != "CFG":
-            continue
+
+        # # selective runs
+        # if model_name != "CFG":
+        #     continue
+
         model = inquire.get_ecore_uml_model(model_name)
         models[model_name] = model
 
@@ -135,8 +141,8 @@ def test_assembly_ground_truth():
         }
     )
 
-    passed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "assembly_passed.csv"))
-    failed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "assembly_failed.csv"))
+    passed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "ground_assembly_passed.csv"))
+    failed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "ground_assembly_failed.csv"))
 
 
 def run_nlp_pipeline():
@@ -244,15 +250,81 @@ def test_assembly(used_preprocessed: bool = False):
     for model_name, fragments in grouped.items():
         results[model_name] = assemble.assemble(fragments)
 
+    # metric
+    passed = 0
+    passed_predictions: list[uml.UML] = []
+    passed_models: list[uml.UML] = []
+    failed = 0
+    failed_predictions: list[uml.UML] = []
+    failed_models: list[uml.UML] = []
+
     # Compare the assembled result with ground truth, version "zoo plantuml"
     # This depends on the plantuml parser
+    for model_name, assembled in results.items():
+        json_file = os.path.join(ZOO_DIR, model_name + ".json")
+        if not os.path.isfile(json_file):
+            # parse the plantuml with the node package
+            exit_code = subprocess.call(
+                args=[
+                    "node",
+                    PLANTUML_PARSER,
+                    json_file.removesuffix(".json") + ".plantuml",
+                ]
+            )
+
+            if exit_code != 0:
+                raise Warning("Did not generate json properly: {}", json_file)
+
+        ground_truth = inquire.get_json_uml(json_file)
+
+        if assembled == ground_truth:
+            # correct
+            passed += 1
+            passed_models.append(ground_truth)
+            passed_predictions.append(assembled)
+        else:
+            # incorrect
+            failed += 1
+            failed_models.append(ground_truth)
+            failed_predictions.append(assembled)
+
+    print("Passed", passed)
+    print("Failed", failed)
+
+    # More detailed metrics for the predictions and the models
+    passed_model_class_counts = [len(model.classes) for model in passed_predictions]
+    failed_model_class_counts = [len(model.classes) for model in failed_predictions]
+
+    original_model_class_counts = []
+    for prediction, ground_truth in zip(failed_predictions, failed_models):
+        original_model_class_counts.append(len(ground_truth.classes))
+
+    passed_dataframe = pandas.DataFrame(
+        data={
+            "model": [m.package_name for m in passed_models],
+            "class count": passed_model_class_counts,
+        }
+    )
+    failed_dataframe = pandas.DataFrame(
+        data={
+            "model": [m.package_name for m in failed_models],
+            "class count": failed_model_class_counts,
+            "original class count": original_model_class_counts,
+        }
+    )
+
+    passed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "assembly_passed.csv"))
+    failed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "assembly_failed.csv"))
 
 
 def read_pickles(location: str):
     grouped = {}  # model name, list of fragments
 
     for pickled_path in os.listdir(location):
-        with open(os.path.join(location, pickled_path)) as pickled_file:
+        potential_file = os.path.join(location, pickled_path)
+        if not os.path.isfile(potential_file):
+            continue
+        with open(potential_file, "rb") as pickled_file:
             pickled: uml.UML = pickle.load(pickled_file)
 
         model_name = re.split("_(class|rel)\d+", pickled_path)[0]
@@ -260,9 +332,10 @@ def read_pickles(location: str):
         if model_name in grouped:
             grouped[model_name].append(pickled)
         else:
-            grouped[model_name] = []
+            grouped[model_name] = [pickled]
     return grouped
 
 
 if __name__ == "__main__":
-    run_nlp_pipeline_preprocessed()
+    # test_assembly(used_preprocessed=True)
+    test_assembly_ground_truth()
