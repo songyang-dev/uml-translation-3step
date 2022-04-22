@@ -5,7 +5,6 @@ import subprocess
 from utils import inquire, uml
 import assemble
 from parse import LazyLoadedExtractor
-from preprocess import resolve_coref, LazyLoadedClassifier
 
 import os, pandas
 
@@ -54,7 +53,7 @@ def test_assembly_ground_truth():
         # if model_name != "CFG":
         #     continue
 
-        model = inquire.get_ecore_uml_model(model_name)
+        model = inquire.get_json_uml(os.path.join(ZOO_DIR, model_name + ".json"))
         models[model_name] = model
 
         # get the fragment's uml
@@ -141,8 +140,8 @@ def test_assembly_ground_truth():
         }
     )
 
-    passed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "ground_assembly_passed.csv"))
-    failed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "ground_assembly_failed.csv"))
+    passed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "assembly_ground_passed.csv"))
+    failed_dataframe.to_csv(os.path.join(TEMP_FOLDER, "assembly_ground_failed.csv"))
 
 
 def run_nlp_pipeline():
@@ -181,6 +180,8 @@ def run_nlp_pipeline():
 
 
 def run_nlp_pipeline_preprocessed():
+    from preprocess import resolve_coref, LazyLoadedClassifier
+
     classified_fragments_path = os.path.join(
         SOURCE_DIR, "three-step", "data", "grouped.csv"
     )

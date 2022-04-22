@@ -4,6 +4,7 @@ Utility script for probing into the fragment dataset
 
 import json
 import os
+import subprocess
 from sys import argv, stdout
 
 import pandas
@@ -18,15 +19,19 @@ if __name__ == "__main__":
 else:
     from . import uml
 
-source_dir = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\cleaning\\"
+SOURCE_DIR = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\cleaning\\"
 
-fragments_csv = os.path.join(source_dir, "fragments.csv")
-labels_csv = os.path.join(source_dir, "labels.csv")
-models_csv = os.path.join(source_dir, "models.csv")
+fragments_csv = os.path.join(SOURCE_DIR, "fragments.csv")
+labels_csv = os.path.join(SOURCE_DIR, "labels.csv")
+models_csv = os.path.join(SOURCE_DIR, "models.csv")
 
 FRAGMENTS = pandas.read_csv(fragments_csv)
 LABELS = pandas.read_csv(labels_csv)
 MODELS = pandas.read_csv(models_csv)
+
+PLANTUML_PARSER = os.path.join(
+    SOURCE_DIR, "three-step", "extraction", "plantuml-parser.js"
+)
 
 CURRENT_FRAGMENT = None
 
@@ -131,7 +136,7 @@ def get_ecore_uml_fragment(label_id: int):
     # UML Ecore
     rset = ResourceSet()
     metamodel_resource = rset.get_resource(
-        os.path.join(source_dir, "zoo", fragment_name)
+        os.path.join(SOURCE_DIR, "zoo", fragment_name)
     )
     root = metamodel_resource.contents[0]
     switch = PlantUMLSwitch()
@@ -146,14 +151,48 @@ def get_ecore_uml_fragment(label_id: int):
     return switch.result
 
 
+def get_json_uml_fragment(label_id: int):
+    # Get fragment unique id
+    label = LABELS.loc[LABELS["id"] == label_id]
+    fragment_id = label["fragment_id"].values[0]
+
+    fragment = FRAGMENTS.loc[FRAGMENTS["unique_id"] == fragment_id]
+
+    global CURRENT_FRAGMENT
+
+    fragment_name = "{}_{}{}.json".format(
+        fragment["model"].values[0],
+        fragment["kind"].values[0],
+        fragment["number"].values[0],
+    )
+
+    CURRENT_FRAGMENT = fragment_name
+
+    json_file = os.path.join(SOURCE_DIR, "zoo", fragment_name)
+    if not os.path.isfile(json_file):
+        # parse the plantuml with the node package
+        exit_code = subprocess.call(
+            args=[
+                "node",
+                PLANTUML_PARSER,
+                json_file.removesuffix(".json") + ".plantuml",
+            ]
+        )
+
+        if exit_code != 0:
+            raise Warning("Did not generate json properly: {}", json_file)
+
+    return get_json_uml(json_file)
+
+
 def get_ecore_uml_model(name: str):
     """
-    Builds the model from the uml
+    Builds the model from the ecore uml
     """
     # UML Ecore
     rset = ResourceSet()
     metamodel_resource = rset.get_resource(
-        os.path.join(source_dir, "zoo", name + ".ecore")
+        os.path.join(SOURCE_DIR, "zoo", name + ".ecore")
     )
     root = metamodel_resource.contents[0]
     switch = PlantUMLSwitch()
