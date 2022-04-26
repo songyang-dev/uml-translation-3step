@@ -10,8 +10,8 @@ import os, pandas
 
 # Initialize the test suite
 CURRENT_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
-ZOO_DIR = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\cleaning\\zoo\\"
-SOURCE_DIR = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\cleaning\\"
+ZOO_DIR = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\analysis\\zoo\\"
+SOURCE_DIR = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\analysis\\"
 
 TEMP_FOLDER = os.path.join(CURRENT_SCRIPT_DIR, "temp")
 os.makedirs(TEMP_FOLDER, exist_ok=True)
@@ -29,7 +29,7 @@ PLANTUML_PARSER = os.path.join(
 )
 
 
-def test_assembly_ground_truth():
+def test_assembly_ground_truth(selective: str = ""):
     """
     Checks the assembly algorithm using the dataset's original fragments and models.
 
@@ -49,16 +49,17 @@ def test_assembly_ground_truth():
         # get the model's uml
         model_name = fragment["model"].values[0]
 
-        # # selective runs
-        # if model_name != "CFG":
-        #     continue
+        # selective runs
+        if selective != "" and model_name != selective:
+            continue
 
         model = inquire.get_json_uml(os.path.join(ZOO_DIR, model_name + ".json"))
         models[model_name] = model
 
         # get the fragment's uml
         label_id: str = row["id"]
-        fragment_uml = inquire.get_ecore_uml_fragment(int(label_id))
+        # WATCH OUT FOR ECORE OR JSON
+        fragment_uml = inquire.get_json_uml_fragment(int(label_id))
         if model_name in grouped:
             grouped[model_name].append(fragment_uml)
         else:
@@ -67,9 +68,9 @@ def test_assembly_ground_truth():
     # Apply the algorithm to groups of fragments
     assembled_models: dict[str, uml.UML] = {}
     for model_name, fragments in grouped.items():
-        # # selective runs
-        # if model_name != "CFG":
-        #     continue
+        # selective runs
+        if selective != "" and selective != model_name:
+            continue
         assembled = assemble.assemble(fragments=fragments)
         assembled_models[model_name] = assembled
 
@@ -339,4 +340,4 @@ def read_pickles(location: str):
 
 if __name__ == "__main__":
     # test_assembly(used_preprocessed=True)
-    test_assembly_ground_truth()
+    test_assembly_ground_truth(selective="CFG")

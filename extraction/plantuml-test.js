@@ -4,9 +4,10 @@ import { parse, parseFile, formatters } from 'plantuml-parser';
 const data = `
 @startuml
 !theme plain
-    class AbstractNode 
+    class Node 
     {
     }
+    Node "0" --> "1" Node: inNode
 @enduml
 `;
 

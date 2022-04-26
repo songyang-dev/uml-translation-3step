@@ -84,7 +84,26 @@ def assemble(fragments: list[uml.UML]):
                 if existing_class.name == rel_dest_class_name:
                     existing_dest_class_index = index
 
-            if existing_source_class_index != -1 and existing_dest_class_index != -1:
+            # one class does not exist
+            if existing_dest_class_index == -1 and existing_source_class_index != -1:
+                new_dest_class = uml.UMLClass(rel_dest_class_name, "class")
+                model_in_progress.classes[existing_source_class_index].association(
+                    new_dest_class, incoming_rel[1], incoming_rel[2]
+                )
+                model_in_progress.classes.append(new_dest_class)
+                continue
+
+            elif existing_dest_class_index != -1 and existing_source_class_index == -1:
+                new_source_class = uml.UMLClass(rel_source_class_name, "class")
+                new_source_class.association(
+                    model_in_progress.classes[existing_dest_class_index],
+                    incoming_rel[1],
+                    incoming_rel[2],
+                )
+                model_in_progress.classes.append(new_source_class)
+                continue
+
+            elif existing_source_class_index != -1 and existing_dest_class_index != -1:
                 # make a new rel between the two classes
                 model_in_progress.classes[existing_source_class_index].association(
                     model_in_progress.classes[existing_dest_class_index],
@@ -93,6 +112,7 @@ def assemble(fragments: list[uml.UML]):
                 )
                 continue
 
+            # SHOULD BE UNREACHABLE
             # indirect match
 
             result = indirect_matching_rel(model_in_progress, incoming_rel)
@@ -105,6 +125,7 @@ def assemble(fragments: list[uml.UML]):
             model_in_progress.classes.extend(incoming_fragment.classes)
 
             continue
+
     return model_in_progress
 
 
