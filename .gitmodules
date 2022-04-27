@@ -1,3 +1,6 @@
 [submodule "uml-class-fragmentation"]
 	path = uml-class-fragmentation
 	url = https://github.com/XsongyangX/uml-class-fragmentation
+[submodule "fragmentation"]
+	path = fragmentation
+	url = https://www.github.com/XsongyangX/uml-class-fragmentation
