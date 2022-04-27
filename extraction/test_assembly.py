@@ -338,6 +338,119 @@ def read_pickles(location: str):
     return grouped
 
 
+def test_assembly_ground_truth_plantuml(selective: str = ""):
+    """
+    Tests the program on the ground truth but with the new plantuml fragmentation
+    """
+    fragments_folder = os.path.join(
+        SOURCE_DIR, "three-step", "data", "fragmented_again"
+    )
+    grouped = pandas.read_csv(
+        os.path.join(SOURCE_DIR, "three-step", "data", "grouped.csv")
+    )
+
+    results = {}
+
+    for index, row in grouped.iterrows():
+        model_name = row["model"]
+
+        if model_name == "AntScripts":
+            continue
+
+        if selective != "" and model_name != selective:
+            continue
+
+        fragments = [
+            os.path.join(fragments_folder, f)
+            for f in os.listdir(fragments_folder)
+            if f.startswith(model_name) and f.endswith(".plantuml")
+        ]
+
+        # create json if it doesn't exist
+        for fragment in fragments:
+            if not os.path.isfile(fragment.removesuffix(".plantuml") + ".json"):
+                exit_code = subprocess.call(args=["node", PLANTUML_PARSER, fragment])
+                if exit_code != 0:
+                    raise Warning("Did not generate json properly: {}", json_file)
+
+        results[model_name] = assemble.assemble(
+            [
+                inquire.get_json_uml_fragment(f.removesuffix(".plantuml") + ".json")
+                for f in fragments
+            ]
+        )
+
+    # metric
+    passed = 0
+    passed_predictions: list[uml.UML] = []
+    passed_models: list[uml.UML] = []
+    failed = 0
+    failed_predictions: list[uml.UML] = []
+    failed_models: list[uml.UML] = []
+
+    # Compare the assembled result with ground truth, version "zoo plantuml"
+    # This depends on the plantuml parser
+    for model_name, assembled in results.items():
+        json_file = os.path.join(ZOO_DIR, model_name + ".json")
+        if not os.path.isfile(json_file):
+            # parse the plantuml with the node package
+            exit_code = subprocess.call(
+                args=[
+                    "node",
+                    PLANTUML_PARSER,
+                    json_file.removesuffix(".json") + ".plantuml",
+                ]
+            )
+
+            if exit_code != 0:
+                raise Warning("Did not generate json properly: {}", json_file)
+
+        ground_truth = inquire.get_json_uml(json_file)
+
+        if assembled == ground_truth:
+            # correct
+            passed += 1
+            passed_models.append(ground_truth)
+            passed_predictions.append(assembled)
+        else:
+            # incorrect
+            failed += 1
+            failed_models.append(ground_truth)
+            failed_predictions.append(assembled)
+
+    print("Passed", passed)
+    print("Failed", failed)
+
+    # More detailed metrics for the predictions and the models
+    passed_model_class_counts = [len(model.classes) for model in passed_predictions]
+    failed_model_class_counts = [len(model.classes) for model in failed_predictions]
+
+    original_model_class_counts = []
+    for prediction, ground_truth in zip(failed_predictions, failed_models):
+        original_model_class_counts.append(len(ground_truth.classes))
+
+    passed_dataframe = pandas.DataFrame(
+        data={
+            "model": [m.package_name for m in passed_models],
+            "class count": passed_model_class_counts,
+        }
+    )
+    failed_dataframe = pandas.DataFrame(
+        data={
+            "model": [m.package_name for m in failed_models],
+            "class count": failed_model_class_counts,
+            "original class count": original_model_class_counts,
+        }
+    )
+
+    passed_dataframe.to_csv(
+        os.path.join(TEMP_FOLDER, "assembly_ground_plantuml_passed.csv")
+    )
+    failed_dataframe.to_csv(
+        os.path.join(TEMP_FOLDER, "assembly_ground_plantuml_failed.csv")
+    )
+
+
 if __name__ == "__main__":
     # test_assembly(used_preprocessed=True)
-    test_assembly_ground_truth(selective="CFG")
+    test_assembly_ground_truth_plantuml()
