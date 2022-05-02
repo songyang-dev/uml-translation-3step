@@ -5,7 +5,7 @@ Utility script for probing into the fragment dataset
 import json
 import os
 import subprocess
-from sys import argv, stdout
+from sys import stdout
 
 import pandas
 from pyecore.resources import ResourceSet
@@ -13,11 +13,7 @@ from pyecore.utils import dispatch
 import pyecore.ecore as ecore
 
 
-if __name__ == "__main__":
-    import uml
-
-else:
-    from . import uml
+import uml
 
 SOURCE_DIR = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\analysis\\"
 

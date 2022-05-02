@@ -250,6 +250,8 @@ def test_assembly(used_preprocessed: bool = False):
     results = {}
 
     for model_name, fragments in grouped.items():
+        if model_name == "AntScripts":
+            continue
         results[model_name] = assemble.assemble(fragments)
 
     # metric
@@ -452,5 +454,5 @@ def test_assembly_ground_truth_plantuml(selective: str = ""):
 
 
 if __name__ == "__main__":
-    # test_assembly(used_preprocessed=True)
-    test_assembly_ground_truth_plantuml()
+    test_assembly(used_preprocessed=True)
+    # test_assembly_ground_truth_plantuml()
