@@ -2,7 +2,7 @@
 Take the fragments and put them together
 """
 from typing import Tuple
-from utils import uml
+from .utils import uml
 
 
 def assemble(fragments: list[uml.UML]):

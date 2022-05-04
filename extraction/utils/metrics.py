@@ -80,7 +80,7 @@ Alternative evaluation
 
 Percent similarity score
 """
-import uml
+from . import uml
 
 
 def compute_metrics(predictions: list[uml.UML], ground_truth: list[uml.UML]):
@@ -151,7 +151,10 @@ def get_model_metrics_classes(prediction: uml.UML, ground: uml.UML):
                 pass
     recall = recall / len(ground.classes)
 
-    f1_score = 2 * (precision * recall) / (precision + recall)
+    try:
+        f1_score = 2 * (precision * recall) / (precision + recall)
+    except ZeroDivisionError:
+        f1_score = 0
 
     return (precision, recall, f1_score)
 

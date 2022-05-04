@@ -30,7 +30,7 @@ class LazyLoadedClassifier:
         self.model = None
         self.vec = None
 
-    def predict(self, text: str):
+    def predict(self, text: str) -> str:
 
         path = os.path.abspath(os.path.dirname(__file__))
 

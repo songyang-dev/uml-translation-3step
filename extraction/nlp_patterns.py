@@ -3,7 +3,7 @@ Extract features for one class
 """
 from sys import stderr
 from typing import Callable
-from utils import uml
+from .utils import uml
 import spacy
 from spacy.matcher import PhraseMatcher
 
@@ -814,4 +814,3 @@ def process_noun_with(semantics: dict, build: BuiltUML):
     package = uml.UML(source_eclass.name)
     package.classes.extend([source_eclass, dest_eclass])
     return package
-

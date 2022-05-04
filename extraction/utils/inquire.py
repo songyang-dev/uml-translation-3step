@@ -13,7 +13,7 @@ from pyecore.utils import dispatch
 import pyecore.ecore as ecore
 
 
-import uml
+from . import uml
 
 SOURCE_DIR = "C:\\Users\\songy\\Documents\\My Documents\\UDEM\\master thesis\\uml data\\database\\analysis\\"
 

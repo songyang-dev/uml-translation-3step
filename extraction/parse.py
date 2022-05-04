@@ -1,7 +1,7 @@
 """
 Parse the English text using rules
 """
-import nlp_patterns
+from . import nlp_patterns
 
 if __name__ == "__main__":
     import os
@@ -32,10 +32,11 @@ class LazyLoadedExtractor:
     """
     See ../translate.py for example usage
     """
+
     def __init__(self, text: str, kind: str) -> None:
         self.extractor = nlp_patterns.BuiltUML(sentence=text, kind=kind)
 
-    def handle_class(self, verbose=True):
+    def handle_class(self, verbose=False):
         extractor = self.extractor
 
         add_class_rules(extractor)
@@ -43,7 +44,7 @@ class LazyLoadedExtractor:
         PACKAGE = extractor.parse(verbose=verbose)
         return PACKAGE
 
-    def handle_rel(self, verbose=True):
+    def handle_rel(self, verbose=False):
         extractor = self.extractor
 
         add_rel_rules(extractor)
