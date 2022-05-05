@@ -9,8 +9,11 @@ def assemble(fragments: list[uml.UML]):
     """
     Simple greedy algorithm
     """
-    # first fragment is accepted as is
-    model_in_progress = fragments[0]
+    # first not none fragment
+    try:
+        model_in_progress = [f for f in fragments if f is not None][0]
+    except IndexError:
+        return uml.UML("Nothing")
 
     # trivial case
     if len(fragments) == 1:
@@ -20,6 +23,9 @@ def assemble(fragments: list[uml.UML]):
     incoming_classes = []
     incoming_rels = []
     for fragment in fragments:
+        if fragment is None:
+            continue
+
         if fragment.classes[0].kind == "class":
             incoming_classes.append(fragment)
         else:
@@ -126,7 +132,7 @@ def assemble(fragments: list[uml.UML]):
 
             continue
 
-    return model_in_progress
+    return remove_duplicates(model_in_progress)
 
 
 def merge_attributes(incoming_class, existing_class):
@@ -206,3 +212,71 @@ def indirect_matching_rel(model: uml.UML, prospective_rel: uml.UMLClass):
     # TODO
     # Do nothing for now
     return None
+
+
+def remove_duplicates(model: uml.UML):
+    """
+    Removes the duplicated classes and relationships
+    """
+    new_model = uml.UML(model.package_name)
+
+    new_classes: dict[str, uml.UMLClass] = {}  # name, uml
+    # name (source dest), list[tuple] (tuple[0] = name, tuple[1] = mult)
+    new_relationships = {}
+
+    for uml_class in model.classes:
+
+        if not uml_class.name in new_classes:
+            new_classes[uml_class.name] = uml.UMLClass(uml_class.name, "class")
+            new_classes[uml_class.name].attributes = uml_class.attributes
+
+        else:
+            # merge attributes
+            for attribute in uml_class.attributes:
+
+                if attribute not in new_classes[uml_class.name].attributes:
+                    new_classes[uml_class.name].attribute(attribute[0], attribute[1])
+
+        # relationships
+        get_unique_relationships(new_relationships, uml_class)
+
+    # link all the relationships
+    for name, relation in new_relationships.items():
+        source_name, dest_name = name.split()
+
+        for relation_tuple in relation:
+            new_classes[source_name].association(
+                new_classes[dest_name], relation_tuple[1], relation_tuple[0]
+            )
+
+    new_model.classes = list(new_classes.values())
+    return new_model
+
+
+def get_unique_relationships(new_relationships, uml_class: uml.UMLClass):
+    for relation in uml_class.associations:
+        relation_hash = f"{uml_class.name} {relation[0].name}"
+
+        if relation_hash in new_relationships:
+            # look for names
+            has_existing_name = False
+            for rel in new_relationships[relation_hash]:
+                if rel[0] == relation[2]:
+                    has_existing_name = True
+
+                    # if an existing relationship of the same name, merge multiplicity
+                    if rel[1] == "" and relation[1] != "":
+                        # multiplicity takes over no multiplicity
+                        rel[1] = relation[1]
+                    else:
+                        # precedence is given to existing multiplicity in the case of conflicting non-null mults
+                        pass
+                    break
+
+                # no existing name found, create a new one
+            if not has_existing_name:
+                new_relationships[relation_hash].append((relation[2], relation[1]))
+
+        else:
+            # create the hash for the source-dest case
+            new_relationships[relation_hash] = [(relation[2], relation[1])]

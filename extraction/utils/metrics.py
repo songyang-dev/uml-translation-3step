@@ -101,6 +101,10 @@ def get_model_metrics_classes(prediction: uml.UML, ground: uml.UML):
     """
     Compute the metrics for the model with regards to classes
     """
+    # the null result
+    if prediction.package_name == "Nothing":
+        return (0, 0, 0)
+
     check_model_integrity(prediction)
     check_model_integrity(ground)
 

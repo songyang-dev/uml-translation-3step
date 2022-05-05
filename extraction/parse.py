@@ -42,6 +42,15 @@ class LazyLoadedExtractor:
         add_class_rules(extractor)
 
         PACKAGE = extractor.parse(verbose=verbose)
+
+        # integrity check
+        if PACKAGE is not None and len(PACKAGE.classes) != 1:
+            raise Exception(
+                "Class fragment has more than one class: {}".format(
+                    PACKAGE.package_name
+                )
+            )
+
         return PACKAGE
 
     def handle_rel(self, verbose=False):
@@ -50,6 +59,15 @@ class LazyLoadedExtractor:
         add_rel_rules(extractor)
 
         PACKAGE = extractor.parse(verbose=verbose)
+
+        # integrity check
+        if PACKAGE is not None and len(PACKAGE.classes) != 2:
+            raise Exception(
+                "Rel fragment does not have exactly two classes: {}".format(
+                    PACKAGE.package_name
+                )
+            )
+
         return PACKAGE
 
 

@@ -42,6 +42,9 @@ class BuiltUML:
         self.matcher.add(pattern_name, pattern, on_match=store_uml_callback)
 
     def parse(self, verbose: bool = True):
+        # clear previous results
+        self.uml_result = {}
+
         matched_results = self.matcher(self.spacy_doc)
 
         if verbose:

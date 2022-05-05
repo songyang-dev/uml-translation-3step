@@ -14,6 +14,7 @@ class UMLClass:
         self.name = name
         # name, type
         self.attributes: List[Tuple[str, str]] = []
+        # dest, mult, name
         self.associations: List[Tuple["UMLClass", str, str]] = []
         self.kind = kind
 
