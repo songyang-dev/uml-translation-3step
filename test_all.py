@@ -4,7 +4,7 @@ Tests the entire pipeline using metrics
 from classification.predict_kind import LazyLoadedClassifier
 from extraction.preprocess import resolve_coref
 from extraction.parse import LazyLoadedExtractor
-from extraction.assemble import assemble
+from extraction.assemble import assemble, remove_duplicates
 from extraction.utils import uml, metrics, inquire
 
 import os
@@ -91,10 +91,30 @@ def evaluate(predictions: dict[str, uml.UML]):
     return metrics.compute_metrics(predicted_models, ground_truth)
 
 
+def selective_test():
+    original = inquire.get_json_uml_fragment(
+        r"C:\Users\songy\Documents\My Documents\UDEM\master thesis\uml data\database\analysis\three-step\extraction\temp\assembly\CFG_original_failed.json"
+    )
+    prediction = inquire.get_json_uml_fragment(
+        r"C:\Users\songy\Documents\My Documents\UDEM\master thesis\uml data\database\analysis\three-step\extraction\temp\assembly\CFG_prediction_failed.json"
+    )
+
+    original = remove_duplicates(original)
+    prediction = remove_duplicates(prediction)
+
+    print(metrics.compute_metrics([prediction], [original]))
+
+
 if __name__ == "__main__":
     setup()
     print("Running metric based test suite. Logs are reported in {}".format(LOG_DIR))
 
     predictions = make_predictions()
-    scores = evaluate(predictions)
-    print(scores)
+    class_scores, rel_scores = evaluate(predictions)
+    print("Class scores", class_scores)
+    print("Rel scores", rel_scores)
+    print("Unweighted Mean for Classes", [sum(y) / len(y) for y in zip(*class_scores)])
+    print("Unweighted Mean for Relations", [sum(y) / len(y) for y in zip(*rel_scores)])
+    print("(Precision, Recall, f1)")
+
+    # selective_test()

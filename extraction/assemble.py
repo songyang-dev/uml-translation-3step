@@ -165,6 +165,16 @@ def indirect_matching_class(model: uml.UML, prospective_class: uml.UMLClass):
 
     Returns the merged model.
     """
+    # Case 0: The model contains an existing class whose name is very close to the
+    # prospective class.
+    for existing_class in model.classes:
+
+        if existing_class.name.lower() == prospective_class.name.lower():
+            existing_class.attributes = merge_attributes(
+                prospective_class, existing_class
+            )
+            return model
+
     # Case 1: The model contains an attribute similar to the class.
     # Remove the attribute from the model and create a new relationship to the class
 

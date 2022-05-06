@@ -80,6 +80,7 @@ Alternative evaluation
 
 Percent similarity score
 """
+from typing import Tuple
 from . import uml
 
 
@@ -91,10 +92,16 @@ def compute_metrics(predictions: list[uml.UML], ground_truth: list[uml.UML]):
     if len(predictions) == 0 or len(ground_truth) == 0:
         raise Exception("Empty lists to compare")
 
-    return [
-        get_model_metrics_classes(pred, ground)
-        for pred, ground in zip(predictions, ground_truth)
-    ]
+    return (
+        [
+            get_model_metrics_classes(pred, ground)
+            for pred, ground in zip(predictions, ground_truth)
+        ],
+        [
+            get_model_metrics_rels(pred, ground)
+            for pred, ground in zip(predictions, ground_truth)
+        ],
+    )
 
 
 def get_model_metrics_classes(prediction: uml.UML, ground: uml.UML):
@@ -163,6 +170,84 @@ def get_model_metrics_classes(prediction: uml.UML, ground: uml.UML):
     return (precision, recall, f1_score)
 
 
+def get_model_metrics_rels(prediction: uml.UML, ground: uml.UML):
+    """
+    Compute the metrics for the model with regards to rels
+    """
+    # the null result
+    if prediction.package_name == "Nothing":
+        return (0, 0, 0)
+
+    check_model_integrity(prediction)
+    check_model_integrity(ground)
+
+    precision = 0
+    recall = 0
+    f1_score = 0
+
+    def compare_rels_exactly(
+        prediction: Tuple[str, str, str, str], ground: Tuple[str, str, str, str]
+    ):
+        """
+        Args are (source class name, dest class name, rel name, multiplicity)
+        """
+        return prediction == ground
+
+    # gather all relations into a list
+    predicted_relations = []
+    for pred_class in prediction.classes:
+
+        for pred_rel in pred_class.associations:
+            predicted_relations.append(
+                (pred_class.name, pred_rel[0].name, pred_rel[2], pred_rel[1])
+            )
+
+    ground_relations = []
+    for ground_class in ground.classes:
+
+        for ground_rel in ground_class.associations:
+            ground_relations.append(
+                (ground_class.name, ground_rel[0].name, ground_rel[2], ground_rel[1])
+            )
+
+    for predicted_rel in predicted_relations:
+        for ground_rel in ground_relations:
+            if compare_rels_exactly(predicted_rel, ground_rel):
+                precision += 1
+                continue
+            else:
+                pass
+    try:
+        precision = precision / len(predicted_relations)
+    except ZeroDivisionError:
+        if len(ground_relations) != 0:
+            precision = 0
+        else:
+            precision = 1
+
+    for ground_rel in ground_relations:
+        for predicted_rel in predicted_relations:
+            if compare_rels_exactly(predicted_rel, ground_rel):
+                recall += 1
+                continue
+            else:
+                pass
+    try:
+        recall = recall / len(ground_relations)
+    except ZeroDivisionError:
+        if len(ground_relations) != 0:
+            recall = 0
+        else:
+            recall = 1
+
+    try:
+        f1_score = 2 * (precision * recall) / (precision + recall)
+    except ZeroDivisionError:
+        f1_score = 0
+
+    return (precision, recall, f1_score)
+
+
 def check_model_integrity(model: uml.UML):
     """
     Checks for uml inconsistencies such as class duplicates
@@ -177,6 +262,17 @@ def check_model_integrity(model: uml.UML):
             )
         else:
             running_up.append(uml_class.name)
+
+        # duplicate relations
+
+        rels_running_up = []
+        for rel in uml_class.associations:
+            hashed = f"{rel[0].name} {rel[1]} {rel[2]}"
+
+            if hashed in rels_running_up:
+                raise Exception("Model contains duplicate relations: {}".format(hashed))
+            else:
+                rels_running_up.append(hashed)
 
 
 if __name__ == "__main__":
