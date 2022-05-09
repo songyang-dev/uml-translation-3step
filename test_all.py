@@ -105,16 +105,39 @@ def selective_test():
     print(metrics.compute_metrics([prediction], [original]))
 
 
-if __name__ == "__main__":
+def run_tests():
     setup()
-    print("Running metric based test suite. Logs are reported in {}".format(LOG_DIR))
+
+    log_message = ""
+
+    log_message += "\nRunning metric based test suite. Logs are reported in {}".format(
+        LOG_DIR
+    )
 
     predictions = make_predictions()
+
+    # log the predictions
+    os.makedirs(os.path.join(LOG_DIR, "predictions"), exist_ok=True)
+    for model_name, prediction in predictions.items():
+        prediction.save(os.path.join(LOG_DIR, "predictions", f"{model_name}.plantuml"))
+
     class_scores, rel_scores = evaluate(predictions)
-    print("Class scores", class_scores)
-    print("Rel scores", rel_scores)
-    print("Unweighted Mean for Classes", [sum(y) / len(y) for y in zip(*class_scores)])
-    print("Unweighted Mean for Relations", [sum(y) / len(y) for y in zip(*rel_scores)])
-    print("(Precision, Recall, f1)")
+    log_message += "\nClass scores\n" + str(class_scores)
+    log_message += "\nRel scores\n" + str(rel_scores)
+    log_message += "\nUnweighted Mean for Classes\t" + str(
+        [sum(y) / len(y) for y in zip(*class_scores)]
+    )
+    log_message += "\nUnweighted Mean for Relations\t" + str(
+        [sum(y) / len(y) for y in zip(*rel_scores)]
+    )
+    log_message += "\n(Precision, Recall, f1)"
+
+    print(log_message)
+    with open(os.path.join(LOG_DIR, "last_run.log"), "w") as out:
+        out.write(log_message)
+
+
+if __name__ == "__main__":
+    run_tests()
 
     # selective_test()
