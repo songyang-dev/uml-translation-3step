@@ -7,6 +7,7 @@
 from io import TextIOWrapper
 import os
 from typing import List, Tuple
+import networkx
 
 
 class UMLClass:
@@ -141,3 +142,24 @@ class UML:
                 return False
 
         return True
+
+    def get_graph_object(self):
+        """
+        Convert this into a NetworkX graph
+
+        Graph can be simple, directed and multi.
+
+        Nodes are classes. Edges are relationships.
+        """
+        # directed
+        graph = networkx.MultiGraph()
+
+        for uml_class in self.classes:
+            graph.add_node(uml_class.name)
+
+            for relation in uml_class.associations:
+                graph.add_edge(
+                    uml_class.name, relation[0].name, mult=relation[1], name=relation[2]
+                )
+
+        return graph
