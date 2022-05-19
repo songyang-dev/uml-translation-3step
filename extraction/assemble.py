@@ -17,7 +17,7 @@ def assemble(fragments: list[uml.UML]):
 
     # trivial case
     if len(fragments) == 1:
-        return model_in_progress
+        return remove_duplicates(model_in_progress)
 
     # re-order the fragments to start with classes
     incoming_classes = []

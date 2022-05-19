@@ -2,9 +2,9 @@ import pickle
 import re
 import shutil
 import subprocess
-from utils import inquire, uml
-import assemble
-from parse import LazyLoadedExtractor
+from .utils import inquire, uml
+from . import assemble
+from .parse import LazyLoadedExtractor
 
 import os, pandas
 
@@ -454,5 +454,5 @@ def test_assembly_ground_truth_plantuml(selective: str = ""):
 
 
 if __name__ == "__main__":
-    test_assembly(used_preprocessed=True)
-    # test_assembly_ground_truth_plantuml()
+    # test_assembly(used_preprocessed=True)
+    test_assembly_ground_truth_plantuml(selective="CFG")

@@ -370,11 +370,11 @@ def get_model_metrics_rels(prediction: uml.UML, ground: uml.UML):
 
         return similarity, size_difference
 
-    # precision, recall = piecewise_comparison(
-    #     precision, recall, compare_rels_exactly, predicted_relations, ground_relations
-    # )
+    precision, recall = piecewise_comparison(
+        precision, recall, compare_rels_exactly, predicted_relations, ground_relations
+    )
 
-    precision, recall = general_comparison(precision, recall)
+    # precision, recall = general_comparison(precision, recall)
 
     try:
         f1_score = 2 * (precision * recall) / (precision + recall)
@@ -412,7 +412,8 @@ def check_model_integrity(model: uml.UML):
 
 
 if __name__ == "__main__":
-    import inquire
+    from . import inquire
+    from ..assemble import remove_duplicates
 
     original = inquire.get_json_uml_fragment(
         r"C:\Users\songy\Documents\My Documents\UDEM\master thesis\uml data\database\analysis\three-step\extraction\temp\assembly\CFG_original_failed.json"
@@ -421,4 +422,7 @@ if __name__ == "__main__":
         r"C:\Users\songy\Documents\My Documents\UDEM\master thesis\uml data\database\analysis\three-step\extraction\temp\assembly\CFG_prediction_failed.json"
     )
 
-    print(get_model_metrics_classes(prediction, original))
+    original = remove_duplicates(original)
+    prediction = remove_duplicates(prediction)
+
+    print(get_model_metrics_rels(prediction, original))

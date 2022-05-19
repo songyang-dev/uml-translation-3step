@@ -88,9 +88,10 @@ if __name__ == "__main__":
 
     # assembly
     # TODO
-    print(extracted_umls)
     combined = assemble(extracted_umls)
 
     script_path = os.path.dirname(os.path.realpath(__file__))
     combined.save(os.path.join(script_path, "out.plantuml"))
+
+    print(combined, "Saved to {}".format(os.path.join(script_path, "out.plantuml")))
 
