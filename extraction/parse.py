@@ -133,11 +133,11 @@ if __name__ == "__main__":
 
     if sys.argv[1] == "class":
         extractor = LazyLoadedExtractor(text, "class")
-        PACKAGE = extractor.handle_class()
+        PACKAGE = extractor.handle_class(verbose=True)
 
     elif sys.argv[1] == "rel":
         extractor = LazyLoadedExtractor(text, "rel")
-        PACKAGE = extractor.handle_rel()
+        PACKAGE = extractor.handle_rel(verbose=True)
 
     else:
         raise Exception("Unknown fragment kind:{}".format(sys.argv[1]))

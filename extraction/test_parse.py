@@ -10,9 +10,9 @@ if len(argv) != 2:
 
 import os
 import pandas as pd
-import nlp_patterns
-from utils import uml, inquire
-import parse
+from . import nlp_patterns
+from .utils import uml, inquire
+from . import parse
 import termcolor
 
 
@@ -22,6 +22,8 @@ CURRENT_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 TEMP_FOLDER = os.path.join(CURRENT_SCRIPT_DIR, "temp")
 os.makedirs(TEMP_FOLDER, exist_ok=True)
 
+SEMANTICS_FOLDER = os.path.join(TEMP_FOLDER, "semantics")
+os.makedirs(SEMANTICS_FOLDER, exist_ok=True)
 
 # Read the preprocessed csv for classification
 PREPROCESSED_CSV = os.path.join(os.getcwd(), argv[1])
@@ -204,6 +206,9 @@ def test_semantics():
                 wrong += 1
                 wrong_fragments.append(fragment["english"])
                 wrong_fragments_indices.append(index)
+
+                # write the wrong result to disk
+                result.save(os.path.join(SEMANTICS_FOLDER, f"{index}.plantuml"))
 
         # no match
         else:

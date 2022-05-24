@@ -5,7 +5,7 @@ Utility script for probing into the fragment dataset
 import json
 import os
 import subprocess
-from sys import stdout
+from sys import argv, stdout
 
 import pandas
 from pyecore.resources import ResourceSet
@@ -200,7 +200,7 @@ def get_ecore_uml_model(name: str):
 
 def get_uml_fragment_name(label_id: int):
     # Get fragment unique id
-    label = LABELS.loc[LABELS["id"] == label_id]
+    label = LABELS.loc[LABELS["id"] == int(label_id)]
     fragment_id = label["fragment_id"].values[0]
 
     fragment = FRAGMENTS.loc[FRAGMENTS["unique_id"] == fragment_id]
@@ -380,5 +380,11 @@ def get_json_uml_fragment(json_file: str):
 
 if __name__ == "__main__":
 
-    model = get_json_uml("temp/cfg/CFG.json")
-    model._to_plantuml(stdout)
+    # model = get_json_uml("temp/cfg/CFG.json")
+    # model._to_plantuml(stdout)
+
+    if len(argv) != 2:
+        print("Usage: py label-id")
+        exit(1)
+    model = get_uml_fragment_name(argv[1])
+    print(model)
