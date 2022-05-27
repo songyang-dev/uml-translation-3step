@@ -659,7 +659,7 @@ passive_voice = [
         "LEFT_ID": "verb",
         "REL_OP": ">",
         "RIGHT_ID": "by",
-        "RIGHT_ATTRS": {"DEP": "agent"},
+        "RIGHT_ATTRS": {"POS": "ADP"},
     },
     {
         "LEFT_ID": "by",
@@ -820,6 +820,55 @@ def process_noun_with(semantics: dict, build: BuiltUML):
     dest_eclass = uml.UMLClass(dest_name, "rel")
 
     source_eclass.association(dest_eclass, multiplicity="", name="")
+
+    package = uml.UML(source_eclass.name)
+    package.classes.extend([source_eclass, dest_eclass])
+    return package
+
+
+# copula + prep
+copula_rel = [
+    # Pattern: (subject) is (complement) of/in (noun)
+    # Extracted: Subject class is pointed to by a noun class with a complement
+    # name for the relation.
+    {"RIGHT_ID": "copula", "RIGHT_ATTRS": {"LEMMA": "be"}},
+    {
+        "LEFT_ID": "copula",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
+    },
+    {
+        "LEFT_ID": "copula",
+        "REL_OP": ">",
+        "RIGHT_ID": "complement",
+        "RIGHT_ATTRS": {"DEP": "attr"},
+    },
+    {
+        "LEFT_ID": "complement",
+        "REL_OP": ">",
+        "RIGHT_ID": "prep",
+        "RIGHT_ATTRS": {"POS": "ADP"},
+    },
+    {
+        "LEFT_ID": "prep",
+        "REL_OP": ">",
+        "RIGHT_ID": "noun",
+        "RIGHT_ATTRS": {"DEP": "pobj"},
+    },
+]
+
+
+def process_copula_rel(semantics: dict, build: BuiltUML):
+    source_name = make_noun_pascal_case(semantics, build, semantics["noun"])
+    dest_name = make_noun_pascal_case(semantics, build, semantics["subject"])
+
+    source_eclass = uml.UMLClass(source_name, "rel")
+    dest_eclass = uml.UMLClass(dest_name, "rel")
+
+    source_eclass.association(
+        dest_eclass, multiplicity="", name=semantics["complement"]
+    )
 
     package = uml.UML(source_eclass.name)
     package.classes.extend([source_eclass, dest_eclass])

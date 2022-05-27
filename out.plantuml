@@ -1,6 +1,12 @@
 @startuml
 !theme plain
-class Way
+class Attribute
+{
+}
+Attribute --> 
+ : belong
+class 
+
 {
 }
 @enduml

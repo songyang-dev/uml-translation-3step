@@ -1,8 +1,9 @@
 """
 Run a test suite on the NLP extraction process
 """
+import itertools
 from sys import argv, stderr
-from typing import Callable
+from typing import Callable, Tuple
 
 if len(argv) != 2:
     print("Usage: py test.py processed-csv", file=stderr)
@@ -198,7 +199,11 @@ def test_semantics():
         if result != None:
             # check semantics
             ground_truth = inquire.get_ecore_uml_fragment(index)
-            if ground_truth == result:
+            # ground_truth = inquire.get_json_uml_fragment_int(int(index))
+
+            # compare the two fragments
+
+            if semantic_comparison(result, ground_truth):
                 passed += 1
                 passed_fragments.append(fragment["english"])
                 passed_fragments_indices.append(index)
@@ -318,6 +323,9 @@ def unit_parsing():
     test_rule(
         "rel", "noun with", [nlp_patterns.noun_with], nlp_patterns.process_noun_with
     )
+    test_rule(
+        "rel", "copula rel", [nlp_patterns.copula_rel], nlp_patterns.process_copula_rel
+    )
     print()
     print("DETAILS")
     print("Individual cases are logged at the temp folder next to this script")
@@ -329,6 +337,58 @@ def unit_parsing():
     print("DETAILS")
     print("Individual cases are logged at the temp folder next to this script")
     print()
+
+
+def semantic_comparison(prediction: uml.UML, original: uml.UML):
+    def compare_classes_no_type(prediction: uml.UMLClass, ground: uml.UMLClass):
+
+        if prediction.name != ground.name:
+            return False
+
+        if len(prediction.attributes) != len(ground.attributes):
+            return False
+
+        for pred_attribute, ground_attribute in zip(
+            prediction.attributes, ground.attributes
+        ):
+            if pred_attribute[0] != ground_attribute[0]:
+                return False
+
+        return True
+
+    def compare_rels(
+        prediction: Tuple[str, str, str, str], ground: Tuple[str, str, str, str]
+    ):
+        """
+        Args are (source class name, dest class name, rel name, multiplicity)
+        """
+        return prediction[:3] == ground[:3]
+
+    if not all(
+        [
+            compare_classes_no_type(prediction_class, original_class)
+            for prediction_class, original_class in zip(
+                prediction.classes, original.classes
+            )
+        ]
+    ):
+        return False
+
+    predicted_relations = itertools.chain(
+        *[umlclass.associations for umlclass in prediction.classes]
+    )
+    ground_relations = itertools.chain(
+        *[umlclass.associations for umlclass in original.classes]
+    )
+
+    for predicted_rel in predicted_relations:
+        for ground_rel in ground_relations:
+            if compare_rels(predicted_rel, ground_rel):
+                pass
+            else:
+                return False
+
+    return True
 
 
 if __name__ == "__main__":

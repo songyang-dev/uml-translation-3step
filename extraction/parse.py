@@ -127,6 +127,9 @@ def add_rel_rules(extractor: nlp_patterns.BuiltUML):
     extractor.add_rule(
         "noun with", [nlp_patterns.noun_with], nlp_patterns.process_noun_with
     )
+    extractor.add_rule(
+        "copula rel", [nlp_patterns.copula_rel], nlp_patterns.process_copula_rel
+    )
 
 
 if __name__ == "__main__":
