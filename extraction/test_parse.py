@@ -198,8 +198,8 @@ def test_semantics():
         # matches
         if result != None:
             # check semantics
-            ground_truth = inquire.get_ecore_uml_fragment(index)
-            # ground_truth = inquire.get_json_uml_fragment_int(int(index))
+            # ground_truth = inquire.get_ecore_uml_fragment(index)
+            ground_truth = inquire.get_json_uml_int(int(index))
 
             # compare the two fragments
 
@@ -392,7 +392,7 @@ def semantic_comparison(prediction: uml.UML, original: uml.UML):
 
 
 if __name__ == "__main__":
-    unit_parsing()
+    # unit_parsing()
 
     print(termcolor.colored("SEMANTIC EVALUATION", "yellow"))
     test_semantics()

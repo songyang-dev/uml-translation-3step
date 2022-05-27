@@ -147,7 +147,7 @@ def get_ecore_uml_fragment(label_id: int):
     return switch.result
 
 
-def get_json_uml_fragment_int(label_id: int):
+def get_json_uml_int(label_id: int):
     # Get fragment unique id
     label = LABELS.loc[LABELS["id"] == label_id]
     fragment_id = label["fragment_id"].values[0]
@@ -178,7 +178,7 @@ def get_json_uml_fragment_int(label_id: int):
         if exit_code != 0:
             raise Warning("Did not generate json properly: {}", json_file)
 
-    return get_json_uml_fragment(json_file)
+    return get_json_uml(json_file)
 
 
 def get_ecore_uml_model(name: str):
@@ -216,6 +216,13 @@ def get_uml_fragment_name(label_id: int):
 def get_json_uml(filename: str):
     with open(filename, "r") as json_path:
         json_object = json.load(json_path)
+
+    # has a package
+    if "type" in json_object["elements"][0]:
+        pass
+    else:
+        # is a fragment
+        return get_json_uml_fragment(filename)
 
     # plantuml-parser syntax
     # get the uml package

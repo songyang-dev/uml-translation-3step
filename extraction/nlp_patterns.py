@@ -873,3 +873,4 @@ def process_copula_rel(semantics: dict, build: BuiltUML):
     package = uml.UML(source_eclass.name)
     package.classes.extend([source_eclass, dest_eclass])
     return package
+
