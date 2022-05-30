@@ -293,6 +293,12 @@ def unit_parsing():
         nlp_patterns.process_component_package,
     )
     test_rule(
+        "class",
+        "3 component and clause",
+        [nlp_patterns.class_to_have_and_many_clauses],
+        nlp_patterns.process_class_to_have_and_many_clauses,
+    )
+    test_rule(
         "rel",
         "to have with multiplicity",
         [nlp_patterns.rel_to_have_multiplicity],
@@ -392,7 +398,7 @@ def semantic_comparison(prediction: uml.UML, original: uml.UML):
 
 
 if __name__ == "__main__":
-    # unit_parsing()
+    unit_parsing()
 
     print(termcolor.colored("SEMANTIC EVALUATION", "yellow"))
     test_semantics()

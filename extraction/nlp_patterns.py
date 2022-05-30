@@ -92,6 +92,9 @@ class BuiltUML:
                 elif "component of package" in found_umls:
                     return found_umls["component of package"]
 
+                elif "3 component and clause" in found_umls:
+                    return found_umls["3 component and clause"]
+
             elif self.kind == "rel":
 
                 if "to have with multiplicity" in found_umls:
@@ -108,6 +111,9 @@ class BuiltUML:
 
                 elif "active voice" in found_umls:
                     return found_umls["active voice"]
+
+                elif "copula rel" in found_umls:
+                    return found_umls["copula rel"]
 
         else:
             return None
@@ -484,6 +490,68 @@ def process_component_package(semantics: dict, build: BuiltUML):
     return package
 
 
+# to have X, Y, ... and Z
+class_to_have_and_many_clauses = [
+    # Pattern: (subject) has/includes/... (object 1), (object 2) ... and (object n)
+    # Extraction: class with name that has many attributes
+    {
+        "RIGHT_ID": "have",
+        "RIGHT_ATTRS": {
+            "DEP": "ROOT",
+            "LEMMA": {"IN": ["have", "contain", "include", "comprise"]},
+        },
+    },
+    {
+        "LEFT_ID": "have",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
+    },
+    {
+        "LEFT_ID": "have",
+        "REL_OP": ">",
+        "RIGHT_ID": "first object",
+        "RIGHT_ATTRS": {"DEP": "dobj"},
+    },
+    {
+        "LEFT_ID": "first object",
+        "REL_OP": ">",
+        "RIGHT_ID": "second object",
+        "RIGHT_ATTRS": {"DEP": "appos"},
+    },
+    {
+        "LEFT_ID": "second object",
+        "REL_OP": ">",
+        "RIGHT_ID": "and",
+        "RIGHT_ATTRS": {"DEP": "cc", "LEMMA": "and"},
+    },
+    {
+        "LEFT_ID": "second object",
+        "REL_OP": ">",
+        "RIGHT_ID": "last object",
+        "RIGHT_ATTRS": {"DEP": "conj"},
+    },
+]
+
+
+def process_class_to_have_and_many_clauses(semantics: dict, build: BuiltUML):
+    class_name = make_noun_pascal_case(semantics, build, semantics["subject"])
+
+    object1_name = make_noun_pascal_case(semantics, build, semantics["first object"])
+    object2_name = make_noun_pascal_case(semantics, build, semantics["second object"])
+    object3_name = make_noun_pascal_case(semantics, build, semantics["last object"])
+
+    eclass = uml.UMLClass(class_name, "class")
+    package = uml.UML(eclass)
+
+    eclass.attribute(object1_name, "")
+    eclass.attribute(object2_name, "")
+    eclass.attribute(object3_name, "")
+
+    package.classes.append(eclass)
+    return package
+
+
 # ----------------------------------------------
 
 # Relationship pattern
@@ -831,7 +899,7 @@ copula_rel = [
     # Pattern: (subject) is (complement) of/in (noun)
     # Extracted: Subject class is pointed to by a noun class with a complement
     # name for the relation.
-    {"RIGHT_ID": "copula", "RIGHT_ATTRS": {"LEMMA": "be"}},
+    {"RIGHT_ID": "copula", "RIGHT_ATTRS": {"LEMMA": "be", "DEP": "ROOT"}},
     {
         "LEFT_ID": "copula",
         "REL_OP": ">",

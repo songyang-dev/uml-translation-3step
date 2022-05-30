@@ -1,12 +1,8 @@
 @startuml
 !theme plain
-class Attribute
+class Man
 {
-}
-Attribute --> 
- : belong
-class 
 
-{
+
 }
 @enduml
