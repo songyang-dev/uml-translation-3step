@@ -79,21 +79,26 @@ class BuiltUML:
                 elif "there is or exists" in found_umls:
                     return found_umls["expletive"]
 
+                elif "3 component and clause" in found_umls:
+                    return found_umls["3 component and clause"]
+
+                elif "2 component and clause" in found_umls:
+                    return found_umls["2 component and clause"]
+
                 elif "to have" in found_umls:
                     return found_umls["to have"]
+
                 elif "class named" in found_umls:
                     return found_umls["class named"]
 
                 elif "compound" in found_umls:
                     return found_umls["compound"]
+
                 elif "compound class explicit" in found_umls:
                     return found_umls["compound class explicit"]
 
                 elif "component of package" in found_umls:
                     return found_umls["component of package"]
-
-                elif "3 component and clause" in found_umls:
-                    return found_umls["3 component and clause"]
 
             elif self.kind == "rel":
 
@@ -547,6 +552,59 @@ def process_class_to_have_and_many_clauses(semantics: dict, build: BuiltUML):
     eclass.attribute(object1_name, "")
     eclass.attribute(object2_name, "")
     eclass.attribute(object3_name, "")
+
+    package.classes.append(eclass)
+    return package
+
+
+class_to_have_and_clause = [
+    # Pattern: (subject) has/includes/... (object 1) and (object 2)
+    # Extraction: class with name that has many attributes
+    {
+        "RIGHT_ID": "have",
+        "RIGHT_ATTRS": {
+            "DEP": "ROOT",
+            "LEMMA": {"IN": ["have", "contain", "include", "comprise"]},
+        },
+    },
+    {
+        "LEFT_ID": "have",
+        "REL_OP": ">",
+        "RIGHT_ID": "subject",
+        "RIGHT_ATTRS": {"DEP": "nsubj"},
+    },
+    {
+        "LEFT_ID": "have",
+        "REL_OP": ">",
+        "RIGHT_ID": "first object",
+        "RIGHT_ATTRS": {"DEP": "dobj"},
+    },
+    {
+        "LEFT_ID": "first object",
+        "REL_OP": ">",
+        "RIGHT_ID": "and",
+        "RIGHT_ATTRS": {"DEP": "cc", "LEMMA": "and"},
+    },
+    {
+        "LEFT_ID": "first object",
+        "REL_OP": ">",
+        "RIGHT_ID": "last object",
+        "RIGHT_ATTRS": {"DEP": "conj"},
+    },
+]
+
+
+def process_class_to_have_and_clause(semantics: dict, build: BuiltUML):
+    class_name = make_noun_pascal_case(semantics, build, semantics["subject"])
+
+    object1_name = make_noun_pascal_case(semantics, build, semantics["first object"])
+    object2_name = make_noun_pascal_case(semantics, build, semantics["last object"])
+
+    eclass = uml.UMLClass(class_name, "class")
+    package = uml.UML(eclass)
+
+    eclass.attribute(object1_name, "")
+    eclass.attribute(object2_name, "")
 
     package.classes.append(eclass)
     return package

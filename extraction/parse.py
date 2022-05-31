@@ -102,6 +102,11 @@ def add_class_rules(extractor: nlp_patterns.BuiltUML):
         [nlp_patterns.class_to_have_and_many_clauses],
         nlp_patterns.process_class_to_have_and_many_clauses,
     )
+    extractor.add_rule(
+        "2 component and clause",
+        [nlp_patterns.class_to_have_and_clause],
+        nlp_patterns.process_class_to_have_and_clause,
+    )
 
 
 def add_rel_rules(extractor: nlp_patterns.BuiltUML):

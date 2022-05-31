@@ -299,6 +299,12 @@ def unit_parsing():
         nlp_patterns.process_class_to_have_and_many_clauses,
     )
     test_rule(
+        "class",
+        "2 component and clause",
+        [nlp_patterns.class_to_have_and_clause],
+        nlp_patterns.process_class_to_have_and_clause,
+    )
+    test_rule(
         "rel",
         "to have with multiplicity",
         [nlp_patterns.rel_to_have_multiplicity],
