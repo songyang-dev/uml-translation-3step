@@ -1,8 +1,6 @@
 @startuml
 !theme plain
-class Man
+class Datatype
 {
-
-
 }
 @enduml

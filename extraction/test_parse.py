@@ -354,7 +354,7 @@ def unit_parsing():
 def semantic_comparison(prediction: uml.UML, original: uml.UML):
     def compare_classes_no_type(prediction: uml.UMLClass, ground: uml.UMLClass):
 
-        if prediction.name != ground.name:
+        if prediction.name.lower() != ground.name.lower():
             return False
 
         if len(prediction.attributes) != len(ground.attributes):
