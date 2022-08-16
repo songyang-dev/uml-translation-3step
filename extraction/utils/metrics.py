@@ -370,11 +370,11 @@ def get_model_metrics_rels(prediction: uml.UML, ground: uml.UML):
 
         return similarity, size_difference
 
-    precision, recall = piecewise_comparison(
-        precision, recall, compare_rels_exactly, predicted_relations, ground_relations
-    )
+    # precision, recall = piecewise_comparison(
+    #     precision, recall, compare_rels_relaxed, predicted_relations, ground_relations
+    # )
 
-    # precision, recall = general_comparison(precision, recall)
+    precision, recall = general_comparison(precision, recall)
 
     try:
         f1_score = 2 * (precision * recall) / (precision + recall)

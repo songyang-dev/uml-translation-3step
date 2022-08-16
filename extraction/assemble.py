@@ -4,7 +4,7 @@ Take the fragments and put them together
 from typing import Tuple
 from .utils import uml
 
-
+# complexity: O((class + rel) * class * attr^2)
 def assemble(fragments: list[uml.UML]):
     """
     Simple greedy algorithm
@@ -22,7 +22,7 @@ def assemble(fragments: list[uml.UML]):
     # re-order the fragments to start with classes
     incoming_classes = []
     incoming_rels = []
-    for fragment in fragments:
+    for fragment in fragments:  # O(frag)
         if fragment is None:
             continue
 
@@ -32,7 +32,7 @@ def assemble(fragments: list[uml.UML]):
             incoming_rels.append(fragment)
     fragments = incoming_classes + incoming_rels
 
-    for incoming_fragment in fragments[1:]:
+    for incoming_fragment in fragments[1:]:  # O(frag) = O(classes + rels)
 
         # class fragment
         if len(incoming_fragment.classes) == 1:
@@ -43,20 +43,24 @@ def assemble(fragments: list[uml.UML]):
             # direct match
             existing_class = None
             existing_source_class_index = -1
-            for index, m in enumerate(model_in_progress.classes):
+            for index, m in enumerate(model_in_progress.classes):  # O(classes)
                 if m.name == incoming_class.name:
                     existing_class = m
                     existing_source_class_index = index
             if existing_class is not None:
 
-                merged_attributes = merge_attributes(incoming_class, existing_class)
+                merged_attributes = merge_attributes(
+                    incoming_class, existing_class
+                )  # O(attr^2)
 
                 existing_class.attributes = merged_attributes
                 model_in_progress.classes[existing_source_class_index] = existing_class
                 continue
 
             # indirect match
-            result = indirect_matching_class(model_in_progress, incoming_class)
+            result = indirect_matching_class(
+                model_in_progress, incoming_class
+            )  # O(class * attr^2)
             if result is not None:
 
                 # perform merging
@@ -84,7 +88,9 @@ def assemble(fragments: list[uml.UML]):
             existing_source_class_index = -1
             existing_dest_class_index = -1
 
-            for index, existing_class in enumerate(model_in_progress.classes):
+            for index, existing_class in enumerate(
+                model_in_progress.classes
+            ):  # O(class)
                 if existing_class.name == rel_source_class_name:
                     existing_source_class_index = index
                 if existing_class.name == rel_dest_class_name:
@@ -132,9 +138,10 @@ def assemble(fragments: list[uml.UML]):
 
             continue
 
-    return remove_duplicates(model_in_progress)
+    return remove_duplicates(model_in_progress)  # O(class * attr)
 
 
+# complexity: O(attributes^2)
 def merge_attributes(incoming_class, existing_class):
     # Merge attributes
     merged_attributes: list[Tuple[str, str]] = []
@@ -159,6 +166,7 @@ def merge_attributes(incoming_class, existing_class):
     return merged_attributes
 
 
+# complexity: O(classes * attributes^2)
 def indirect_matching_class(model: uml.UML, prospective_class: uml.UMLClass):
     """
     Checks for the most similar things in the model. If nothing, return None.
@@ -167,10 +175,11 @@ def indirect_matching_class(model: uml.UML, prospective_class: uml.UMLClass):
     """
     # Case 0: The model contains an existing class whose name is very close to the
     # prospective class.
-    for existing_class in model.classes:
+    # complexity: O(classes * attributes^2)
+    for existing_class in model.classes:  # O(classes)
 
         if existing_class.name.lower() == prospective_class.name.lower():
-            existing_class.attributes = merge_attributes(
+            existing_class.attributes = merge_attributes(  # O(attributes^2)
                 prospective_class, existing_class
             )
             return model
@@ -179,12 +188,13 @@ def indirect_matching_class(model: uml.UML, prospective_class: uml.UMLClass):
     # Remove the attribute from the model and create a new relationship to the class
 
     # find all attributes that are identical to the prospective class
-    for existing_class in model.classes:
+    # complexity: O(classes * attributes)
+    for existing_class in model.classes:  # O(classes)
         found_attribute = False
 
-        new_attributes = existing_class.attributes.copy()
+        new_attributes = existing_class.attributes.copy()  # O(attributes)
 
-        for attribute in existing_class.attributes:
+        for attribute in existing_class.attributes:  # O(attribute)
             name, _ = attribute
 
             # there is an identical attribute
@@ -224,6 +234,7 @@ def indirect_matching_rel(model: uml.UML, prospective_rel: uml.UMLClass):
     return None
 
 
+# complexity: O(classes * attributes)
 def remove_duplicates(model: uml.UML):
     """
     Removes the duplicated classes and relationships
@@ -234,7 +245,7 @@ def remove_duplicates(model: uml.UML):
     # name (source dest), list[tuple] (tuple[0] = name, tuple[1] = mult)
     new_relationships = {}
 
-    for uml_class in model.classes:
+    for uml_class in model.classes:  # O(classes)
 
         if not uml_class.name in new_classes:
             new_classes[uml_class.name] = uml.UMLClass(uml_class.name, "class")
@@ -242,7 +253,7 @@ def remove_duplicates(model: uml.UML):
 
         else:
             # merge attributes
-            for attribute in uml_class.attributes:
+            for attribute in uml_class.attributes:  # O(attributes)
 
                 if attribute not in new_classes[uml_class.name].attributes:
                     new_classes[uml_class.name].attribute(attribute[0], attribute[1])
@@ -263,14 +274,15 @@ def remove_duplicates(model: uml.UML):
     return new_model
 
 
+# complexity: O(rel^2)
 def get_unique_relationships(new_relationships, uml_class: uml.UMLClass):
-    for relation in uml_class.associations:
+    for relation in uml_class.associations:  # O(rel)
         relation_hash = f"{uml_class.name} {relation[0].name}"
 
         if relation_hash in new_relationships:
             # look for names
             has_existing_name = False
-            for rel in new_relationships[relation_hash]:
+            for rel in new_relationships[relation_hash]:  # O(rel)
                 if rel[0] == relation[2]:
                     has_existing_name = True
 

@@ -111,6 +111,9 @@ class BuiltUML:
                 elif "composed" in found_umls:  # this might be changed to gain priority
                     return found_umls["composed"]
 
+                elif "noun with" in found_umls:
+                    return found_umls["noun with"]
+
                 elif "passive voice" in found_umls:
                     return found_umls["passive voice"]
 
@@ -203,6 +206,8 @@ def make_noun_pascal_case(current_semantics, build_in_progress: BuiltUML, noun: 
         if noun_token == chunk.root:
             for token in chunk:
                 if token.is_stop:
+                    continue
+                elif token.text == "exactly":
                     continue
                 else:
                     if token.text.isupper():  # acronym case
