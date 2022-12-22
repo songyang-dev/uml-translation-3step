@@ -1,6 +1,6 @@
 # 3Step formula for the translation of English to UML
 
-The algorithm has three steps, starting with an English text.
+The algorithm has three steps, starting with an English text. Described in this paper: https://arxiv.org/abs/2210.14441 
 
 ## Installation
 
