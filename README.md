@@ -57,4 +57,6 @@ Scripts involved:
 
 ## 3 Assembly
 
-All UML fragments are assembled back to one large UML model, mainting logical consistency. This UML model is the final translation in UML.
+All UML fragments are assembled back to one large UML model, maintaining logical consistency. This UML model is the final translation in UML.
+
+The assembly (also called composition) algorithm is a greedy algorithm that combines UML fragments one at a time into a work-in-progress larger model. The details of the algorithm are described in the paper.
