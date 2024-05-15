@@ -2,6 +2,8 @@
 
 The algorithm has three steps, starting with an English text. Described in this paper: https://arxiv.org/abs/2210.14441 
 
+The data used to train the algorithm is available here: https://github.com/songyang-dev/uml-classes-and-specs.
+
 ## Installation
 
 To run this repo, you need Python 3 and several Python modules. All can be installed via `pip`. A `requirements.txt` file is provided so you can `pip install -r requirements.txt`.
